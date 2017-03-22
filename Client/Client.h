@@ -1,7 +1,9 @@
 #pragma once
 
+#include <unordered_map>
+
 #include "Application.h"
-#include <glm/mat4x4.hpp>
+#include <glm/glm.hpp>
 
 #include <RakPeerInterface.h>
 #include <MessageIdentifiers.h>
@@ -24,6 +26,11 @@ public:
 
 	void HandleNetworkMessages();
 
+	void OnSetClientIDPacket(RakNet::Packet* packet);
+	void OnReceivedClientDataPacket(RakNet::Packet* packet);
+
+	void SendClientGameObject();
+
 protected:
 	glm::mat4	m_viewMatrix;
 	glm::mat4	m_projectionMatrix;
@@ -32,4 +39,16 @@ protected:
 
 	const char* IP = "127.0.0.1";
 	const unsigned short PORT = 5456;
+
+	struct GameObject
+	{
+		glm::vec3 position;
+		glm::vec4 colour;
+	};
+
+	GameObject m_myGameObject;
+
+	int m_myClientID;
+
+	std::unordered_map<int, GameObject> m_otherClientGameObjects;
 };

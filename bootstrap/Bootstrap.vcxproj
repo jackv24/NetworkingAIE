@@ -111,7 +111,6 @@
     <ClInclude Include="Application.h" />
     <ClInclude Include="Audio.h" />
     <ClInclude Include="Font.h" />
-    <ClInclude Include="GameMessages.h" />
     <ClInclude Include="Gizmos.h" />
     <ClInclude Include="gl_core_4_4.h" />
     <ClInclude Include="imgui_glfw3.h" />

@@ -6,7 +6,19 @@
 #include <RakPeerInterface.h>
 #include <MessageIdentifiers.h>
 #include <BitStream.h>
-#include <GameMessages.h>
+#include "GameMessages.h"
+
+int nextClientID = 1;
+
+void SendNewClientID(RakNet::RakPeerInterface* pPeerInterface, RakNet::SystemAddress& address)
+{
+	RakNet::BitStream bs;
+	bs.Write((RakNet::MessageID)GameMessages::ID_SERVER_SET_CLIENT_ID);
+	bs.Write(nextClientID);
+	nextClientID++;
+
+	pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, address, false);
+}
 
 void SendClientPing(RakNet::RakPeerInterface* pPeerInterface)
 {
@@ -33,6 +45,7 @@ void HandeNetworkMessages(RakNet::RakPeerInterface* pPeerInterface)
 			{
 			case ID_NEW_INCOMING_CONNECTION:
 				std::cout << "A connection is incoming." << std::endl;
+				SendNewClientID(pPeerInterface, packet->systemAddress);
 				break;
 			case ID_DISCONNECTION_NOTIFICATION:
 				std::cout << "A client has disconnected." << std::endl;
@@ -40,6 +53,13 @@ void HandeNetworkMessages(RakNet::RakPeerInterface* pPeerInterface)
 			case ID_CONNECTION_LOST:
 				std::cout << "A client lost the connection." << std::endl;
 				break;
+			case ID_CLIENT_CLIENT_DATA:
+			{
+				RakNet::BitStream bs(packet->data, packet->length, false);
+				pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, true);
+
+				break;
+			}
 			default:
 				std::cout << "Received a message with an unknown ID: " << packet->data[0];
 				break;
@@ -67,7 +87,7 @@ int main()
 	pPeerInterface->SetMaximumIncomingConnections(32);
 
 	//Startup a thread to ping clients every second
-	std::thread pingThread(SendClientPing, pPeerInterface);
+	//std::thread pingThread(SendClientPing, pPeerInterface);
 
 	HandeNetworkMessages(pPeerInterface);
 
