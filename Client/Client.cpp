@@ -76,26 +76,31 @@ void Client::update(float deltaTime)
 	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))
 		quit();
 
+	bool hasMoved = false;
+
 	if (input->isKeyDown(aie::INPUT_KEY_LEFT))
 	{
 		m_myGameObject.m_position.x -= 10.0f * deltaTime;
-		SendClientGameObject();
+		hasMoved = true;
 	}
 	if (input->isKeyDown(aie::INPUT_KEY_RIGHT))
 	{
 		m_myGameObject.m_position.x += 10.0f * deltaTime;
-		SendClientGameObject();
+		hasMoved = true;
 	}
 	if (input->isKeyDown(aie::INPUT_KEY_UP))
 	{
 		m_myGameObject.m_position.z -= 10.0f * deltaTime;
-		SendClientGameObject();
+		hasMoved = true;
 	}
 	if (input->isKeyDown(aie::INPUT_KEY_DOWN))
 	{
 		m_myGameObject.m_position.z += 10.0f * deltaTime;
-		SendClientGameObject();
+		hasMoved = true;
 	}
+
+	if(hasMoved)
+		SendClientGameObject();
 
 	m_myGameObject.Draw();
 
