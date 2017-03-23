@@ -4,10 +4,13 @@
 
 #include "Application.h"
 #include <glm/glm.hpp>
+#include <glm/ext.hpp>
 
 #include <RakPeerInterface.h>
 #include <MessageIdentifiers.h>
 #include <BitStream.h>
+
+#include <GameObject.h>
 
 class Client : public aie::Application {
 public:
@@ -39,12 +42,6 @@ protected:
 
 	const char* IP = "127.0.0.1";
 	const unsigned short PORT = 5456;
-
-	struct GameObject
-	{
-		glm::vec3 position;
-		glm::vec4 colour;
-	};
 
 	GameObject m_myGameObject;
 

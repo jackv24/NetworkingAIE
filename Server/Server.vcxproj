@@ -71,16 +71,16 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)dependencies/raknet/include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)dependencies/raknet/libs;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)dependencies/glm;$(SolutionDir)bootstrap;$(SolutionDir)dependencies/raknet/include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)temp\bootstrap\$(Configuration);$(SolutionDir)dependencies/raknet/libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>$(SolutionDir)dependencies/raknet/libs;$(LibraryPath)</LibraryPath>
-    <IncludePath>$(SolutionDir)dependencies/raknet/include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)temp\bootstrap\$(Configuration);$(SolutionDir)dependencies/raknet/libs;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)dependencies/glm;$(SolutionDir)bootstrap;$(SolutionDir)dependencies/raknet/include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -148,10 +148,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameMessages.h" />
+    <ClInclude Include="GameObject.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

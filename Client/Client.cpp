@@ -1,6 +1,4 @@
 #include <iostream>
-#include <glm/glm.hpp>
-#include <glm/ext.hpp>
 
 #include "Client.h"
 #include "Gizmos.h"
@@ -12,6 +10,17 @@ using glm::vec3;
 using glm::vec4;
 using glm::mat4;
 using aie::Gizmos;
+
+glm::vec4 colours[] = {
+	glm::vec4(0.5f, 0.5f, 0.5f, 1),
+	glm::vec4(1, 0, 0, 1),
+	glm::vec4(0, 1, 0, 1),
+	glm::vec4(0, 0, 1, 1),
+	glm::vec4(1, 1, 0, 1),
+	glm::vec4(0, 1, 1, 1),
+	glm::vec4(1, 0, 1, 1),
+	glm::vec4(1, 1, 1, 1)
+};
 
 Client::Client()
 {
@@ -35,8 +44,9 @@ bool Client::startup()
 										  getWindowWidth() / (float)getWindowHeight(),
 										  0.1f, 1000.f);
 
-	m_myGameObject.position = glm::vec3(0, 0, 0);
-	m_myGameObject.colour = glm::vec4(1, 0, 0, 1);
+	srand(time(NULL));
+
+	m_myGameObject.m_position = glm::vec3(0, 0, 0);
 
 	//Connect to server
 	HandleNetworkConnection();
@@ -68,30 +78,30 @@ void Client::update(float deltaTime)
 
 	if (input->isKeyDown(aie::INPUT_KEY_LEFT))
 	{
-		m_myGameObject.position.x -= 10.0f * deltaTime;
+		m_myGameObject.m_position.x -= 10.0f * deltaTime;
 		SendClientGameObject();
 	}
 	if (input->isKeyDown(aie::INPUT_KEY_RIGHT))
 	{
-		m_myGameObject.position.x += 10.0f * deltaTime;
+		m_myGameObject.m_position.x += 10.0f * deltaTime;
 		SendClientGameObject();
 	}
 	if (input->isKeyDown(aie::INPUT_KEY_UP))
 	{
-		m_myGameObject.position.z += 10.0f * deltaTime;
+		m_myGameObject.m_position.z += 10.0f * deltaTime;
 		SendClientGameObject();
 	}
 	if (input->isKeyDown(aie::INPUT_KEY_DOWN))
 	{
-		m_myGameObject.position.z -= 10.0f * deltaTime;
+		m_myGameObject.m_position.z -= 10.0f * deltaTime;
 		SendClientGameObject();
 	}
 
-	Gizmos::addSphere(m_myGameObject.position, 1.0f, 32, 32, m_myGameObject.colour);
+	Gizmos::addSphere(m_myGameObject.m_position, 1.0f, 32, 32, m_myGameObject.m_colour);
 
 	for (auto& otherClient : m_otherClientGameObjects)
 	{
-		Gizmos::addSphere(otherClient.second.position, 1.0f, 32, 32, otherClient.second.colour);
+		Gizmos::addSphere(otherClient.second.m_position, 1.0f, 32, 32, otherClient.second.m_colour);
 	}
 
 	//Update network
@@ -179,6 +189,7 @@ void Client::HandleNetworkMessages()
 		}
 		case ID_SERVER_SET_CLIENT_ID:
 			OnSetClientIDPacket(packet);
+			SendClientGameObject();
 			break;
 		case ID_CLIENT_CLIENT_DATA:
 			OnReceivedClientDataPacket(packet);
@@ -195,6 +206,8 @@ void Client::OnSetClientIDPacket(RakNet::Packet* packet)
 	RakNet::BitStream bsIn(packet->data, packet->length, false);
 	bsIn.IgnoreBytes(sizeof(RakNet::MessageID));
 	bsIn.Read(m_myClientID);
+
+	m_myGameObject.m_colour = colours[m_myClientID % 8];
 
 	std::cout << "Set my client ID to: " << m_myClientID << std::endl;
 }
@@ -217,7 +230,7 @@ void Client::OnReceivedClientDataPacket(RakNet::Packet* packet)
 
 		//Output gameobject information to the console
 		std::cout << "Client " << clientID <<
-			" at: " << clientData.position.x << " " << clientData.position.z << std::endl;
+			" at: " << clientData.m_position.x << " " << clientData.m_position.z << std::endl;
 	}
 }
 

@@ -2,19 +2,26 @@
 #include <string>
 #include <thread>
 #include <chrono>
+#include <unordered_map>
 
 #include <RakPeerInterface.h>
 #include <MessageIdentifiers.h>
 #include <BitStream.h>
 #include "GameMessages.h"
+#include "GameObject.h"
 
 int nextClientID = 1;
+
+std::unordered_map<int, GameObject> clientGameObjects;
 
 void SendNewClientID(RakNet::RakPeerInterface* pPeerInterface, RakNet::SystemAddress& address)
 {
 	RakNet::BitStream bs;
 	bs.Write((RakNet::MessageID)GameMessages::ID_SERVER_SET_CLIENT_ID);
 	bs.Write(nextClientID);
+
+	clientGameObjects[nextClientID] = GameObject();
+
 	nextClientID++;
 
 	pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, address, false);
@@ -46,6 +53,15 @@ void HandeNetworkMessages(RakNet::RakPeerInterface* pPeerInterface)
 			case ID_NEW_INCOMING_CONNECTION:
 				std::cout << "A connection is incoming." << std::endl;
 				SendNewClientID(pPeerInterface, packet->systemAddress);
+				for (auto& client : clientGameObjects)
+				{
+					RakNet::BitStream bs;
+					bs.Write((RakNet::MessageID)GameMessages::ID_CLIENT_CLIENT_DATA);
+					bs.Write(client.first);
+					bs.Write((char*)&client.second, sizeof(GameObject));
+
+					pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_SYSTEM_ADDRESS, true);
+				}
 				break;
 			case ID_DISCONNECTION_NOTIFICATION:
 				std::cout << "A client has disconnected." << std::endl;
@@ -57,6 +73,20 @@ void HandeNetworkMessages(RakNet::RakPeerInterface* pPeerInterface)
 			{
 				RakNet::BitStream bs(packet->data, packet->length, false);
 				pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, true);
+
+				bs.IgnoreBytes(sizeof(RakNet::MessageID));
+
+				int clientID;
+				bs.Read(clientID);
+
+				GameObject clientData;
+				bs.Read((char*)&clientData, sizeof(GameObject));
+
+				clientGameObjects[clientID] = clientData;
+
+				//Output gameobject information to the console
+				std::cout << "Client " << clientID <<
+					" at: " << clientData.m_position.x << " " << clientData.m_position.z << std::endl;
 
 				break;
 			}
