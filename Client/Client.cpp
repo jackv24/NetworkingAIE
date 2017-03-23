@@ -39,7 +39,7 @@ bool Client::startup()
 	Gizmos::create(10000, 10000, 10000, 10000);
 
 	// create simple camera transforms
-	m_viewMatrix = glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
+	m_viewMatrix = glm::lookAt(vec3(0, 10, 10), vec3(0), vec3(0, 1, 0));
 	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f,
 										  getWindowWidth() / (float)getWindowHeight(),
 										  0.1f, 1000.f);
@@ -88,20 +88,20 @@ void Client::update(float deltaTime)
 	}
 	if (input->isKeyDown(aie::INPUT_KEY_UP))
 	{
-		m_myGameObject.m_position.z += 10.0f * deltaTime;
+		m_myGameObject.m_position.z -= 10.0f * deltaTime;
 		SendClientGameObject();
 	}
 	if (input->isKeyDown(aie::INPUT_KEY_DOWN))
 	{
-		m_myGameObject.m_position.z -= 10.0f * deltaTime;
+		m_myGameObject.m_position.z += 10.0f * deltaTime;
 		SendClientGameObject();
 	}
 
-	Gizmos::addSphere(m_myGameObject.m_position, 1.0f, 32, 32, m_myGameObject.m_colour);
+	m_myGameObject.Draw();
 
 	for (auto& otherClient : m_otherClientGameObjects)
 	{
-		Gizmos::addSphere(otherClient.second.m_position, 1.0f, 32, 32, otherClient.second.m_colour);
+		otherClient.second.Draw();
 	}
 
 	//Update network
@@ -194,6 +194,18 @@ void Client::HandleNetworkMessages()
 		case ID_CLIENT_CLIENT_DATA:
 			OnReceivedClientDataPacket(packet);
 			break;
+		case ID_SERVER_CLIENT_DISCONNECTED:
+		{
+			RakNet::BitStream bsIn(packet->data, packet->length, false);
+			bsIn.IgnoreBytes(sizeof(RakNet::MessageID));
+
+			int clientID;
+			bsIn.Read(clientID);
+			
+			m_otherClientGameObjects.erase(clientID);
+
+			break;
+		}
 		default:
 			std::cout << "Received a message with an unknown ID: " << packet->data[0];
 			break;
