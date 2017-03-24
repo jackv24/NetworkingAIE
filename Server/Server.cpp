@@ -71,7 +71,7 @@ void Server::HandeNetworkMessages(RakNet::RakPeerInterface* pPeerInterface)
 					bs.Write(client.first);
 					bs.Write((char*)&client.second, sizeof(GameObject));
 
-					pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_SYSTEM_ADDRESS, true);
+					pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
 				}
 				break;
 			case ID_DISCONNECTION_NOTIFICATION:
