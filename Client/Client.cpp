@@ -1,9 +1,10 @@
 #include <iostream>
 
-#include "Client.h"
+#include <BitStream.h>
 #include "Gizmos.h"
 #include "Input.h"
 
+#include "Client.h"
 #include <GameMessages.h>
 
 using glm::vec3;
@@ -11,16 +12,8 @@ using glm::vec4;
 using glm::mat4;
 using aie::Gizmos;
 
-glm::vec4 colours[] = {
-	glm::vec4(0.5f, 0.5f, 0.5f, 1),
-	glm::vec4(1, 0, 0, 1),
-	glm::vec4(0, 1, 0, 1),
-	glm::vec4(0, 0, 1, 1),
-	glm::vec4(1, 1, 0, 1),
-	glm::vec4(0, 1, 1, 1),
-	glm::vec4(1, 0, 1, 1),
-	glm::vec4(1, 1, 1, 1)
-};
+const float WIDTH = 50.0f;
+const float HEIGHT = 30.0f;
 
 Client::Client()
 {
@@ -39,14 +32,12 @@ bool Client::startup()
 	Gizmos::create(10000, 10000, 10000, 10000);
 
 	// create simple camera transforms
-	m_viewMatrix = glm::lookAt(vec3(0, 10, 10), vec3(0), vec3(0, 1, 0));
+	m_viewMatrix = glm::lookAt(vec3(0, 0, 50), vec3(0), vec3(0, 1, 0));
 	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f,
 										  getWindowWidth() / (float)getWindowHeight(),
 										  0.1f, 1000.f);
 
-	srand(time(NULL));
-
-	m_myGameObject.m_position = glm::vec3(0, 0, 0);
+	srand((unsigned int)time(NULL));
 
 	//Connect to server
 	HandleNetworkConnection();
@@ -78,24 +69,22 @@ void Client::update(float deltaTime)
 
 	bool hasMoved = false;
 
-	if (input->isKeyDown(aie::INPUT_KEY_LEFT))
-	{
-		m_myGameObject.m_position.x -= 10.0f * deltaTime;
-		hasMoved = true;
-	}
-	if (input->isKeyDown(aie::INPUT_KEY_RIGHT))
-	{
-		m_myGameObject.m_position.x += 10.0f * deltaTime;
-		hasMoved = true;
-	}
 	if (input->isKeyDown(aie::INPUT_KEY_UP))
 	{
-		m_myGameObject.m_position.z -= 10.0f * deltaTime;
+		m_myPlayer.yPos += 20.0f * deltaTime;
+
+		if (m_myPlayer.yPos > 20)
+			m_myPlayer.yPos = 20;
+
 		hasMoved = true;
 	}
 	if (input->isKeyDown(aie::INPUT_KEY_DOWN))
 	{
-		m_myGameObject.m_position.z += 10.0f * deltaTime;
+		m_myPlayer.yPos -= 20.0f * deltaTime;
+
+		if (m_myPlayer.yPos < -20)
+			m_myPlayer.yPos = -20;
+
 		hasMoved = true;
 	}
 
@@ -103,8 +92,16 @@ void Client::update(float deltaTime)
 		SendClientGameObject();
 
 	//Draw players
-	m_myGameObject.Draw();
-	m_otherGameObject.Draw();
+	int swap = m_clientID == 1 ? 1 : -1;
+
+	Gizmos::addAABBFilled(
+		glm::vec3(-45 * swap, m_myPlayer.yPos, 0),
+		glm::vec3(1, 5, 1),
+		glm::vec4(1, 0, 0, 1));
+	Gizmos::addAABBFilled(
+		glm::vec3(45 * swap, m_otherPlayer.yPos, 0),
+		glm::vec3(1, 5, 1),
+		glm::vec4(1, 0, 0, 1));
 
 	//Update network
 	HandleNetworkMessages();
@@ -117,9 +114,11 @@ void Client::draw()
 	clearScreen();
 
 	// update perspective in case window resized
-	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f,
+	/*m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f,
 										  getWindowWidth() / (float)getWindowHeight(),
-										  0.1f, 1000.f);
+										  0.1f, 1000.f);*/
+
+	m_projectionMatrix = glm::ortho(-WIDTH, WIDTH, -HEIGHT, HEIGHT, 0.0f, 1000.0f);
 
 	Gizmos::draw(m_projectionMatrix * m_viewMatrix);
 }
@@ -193,7 +192,7 @@ void Client::HandleNetworkMessages()
 			OnSetClientIDPacket(packet);
 			SendClientGameObject();
 			break;
-		case ID_CLIENT_CLIENT_DATA:
+		case ID_CLIENT_PLAYER_DATA:
 			OnReceivedClientDataPacket(packet);
 			break;
 		default:
@@ -229,16 +228,15 @@ void Client::OnReceivedClientDataPacket(RakNet::Packet* packet)
 		//If the client ID does not match our ID, update our client GameObject information
 		if (clientID != m_clientID)
 		{
-			bsIn.Read((char*)&m_otherGameObject, sizeof(GameObject));
+			bsIn.Read((char*)&m_otherPlayer, sizeof(Player));
 
-			//Output gameobject information to the console
 			std::cout << "Client " << clientID <<
-				" at: " << m_otherGameObject.m_position.x << " " << m_otherGameObject.m_position.z << std::endl;
+				" at: " << m_otherPlayer.yPos << std::endl;
 		}
 	}
 }
 
 void Client::SendClientGameObject()
 {
-	m_myGameObject.SendData(m_clientID, m_pPeerInterface);
+	m_myPlayer.SendData(m_clientID, m_pPeerInterface);
 }

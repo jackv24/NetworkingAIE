@@ -30,7 +30,7 @@ void GameObject::SendData(int clientID, RakNet::RakPeerInterface* pPeerInterface
 {
 	//Create new bitstream with client data ID
 	RakNet::BitStream bs;
-	bs.Write((RakNet::MessageID)GameMessages::ID_CLIENT_CLIENT_DATA);
+	bs.Write((RakNet::MessageID)GameMessages::ID_CLIENT_GAMEOBJECT_DATA);
 
 	//Write client ID and data to stream
 	bs.Write(clientID);

@@ -98,7 +98,7 @@ void Server::HandeNetworkMessages(RakNet::RakPeerInterface* pPeerInterface)
 				std::cout << "A client lost the connection." << std::endl;
 				break;
 			}
-			case ID_CLIENT_CLIENT_DATA:
+			case ID_CLIENT_PLAYER_DATA:
 			{
 				RakNet::BitStream bsIn(packet->data, packet->length, false);
 				//Message was identified, so remove message ID from packet
@@ -113,18 +113,18 @@ void Server::HandeNetworkMessages(RakNet::RakPeerInterface* pPeerInterface)
 				{
 					//Read data into either player one or two
 					if(clientID == 1)
-						bsIn.Read((char*)&playerOne, sizeof(GameObject));
+						bsIn.Read((char*)&playerOne, sizeof(Player));
 					else if(clientID == 2)
-						bsIn.Read((char*)&playerTwo, sizeof(GameObject));
+						bsIn.Read((char*)&playerTwo, sizeof(Player));
 
 					//Relay data
 					RakNet::BitStream bsOut(packet->data, packet->length, false);
 					pPeerInterface->Send(&bsOut, HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, true);
 				
 					//Print data to console for debugging
-					GameObject client = clientID == 1 ? playerOne : playerTwo;
+					Player client = clientID == 1 ? playerOne : playerTwo;
 					std::cout << "Client " << clientID <<
-						" at: " << client.m_position.x << " " << client.m_position.z << std::endl;
+						" at: " << client.yPos << std::endl;
 				}
 				break;
 			}

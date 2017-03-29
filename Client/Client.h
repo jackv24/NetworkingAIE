@@ -5,10 +5,8 @@
 #include <glm/ext.hpp>
 
 #include <RakPeerInterface.h>
-#include <MessageIdentifiers.h>
-#include <BitStream.h>
 
-#include <GameObject.h>
+#include <Player.h>
 
 class Client : public aie::Application {
 public:
@@ -42,7 +40,7 @@ protected:
 	const unsigned short PORT = 5456;
 
 	int m_clientID = 0;
-	GameObject m_myGameObject;
+	Player m_myPlayer;
 
-	GameObject m_otherGameObject;
+	Player m_otherPlayer;
 };

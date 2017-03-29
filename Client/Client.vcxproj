@@ -90,6 +90,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Server\GameObject.cpp" />
+    <ClCompile Include="..\Server\Player.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>

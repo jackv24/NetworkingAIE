@@ -2,6 +2,7 @@
 
 #include <RakPeerInterface.h>
 #include "GameObject.h"
+#include "Player.h"
 
 class Server
 {
@@ -17,7 +18,7 @@ public:
 	bool playerOneConnected = false;
 	bool playerTwoConnected = false;
 
-	GameObject playerOne;
-	GameObject playerTwo;
+	Player playerOne;
+	Player playerTwo;
 };
 
