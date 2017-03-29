@@ -15,6 +15,10 @@ using aie::Gizmos;
 const float WIDTH = 50.0f;
 const float HEIGHT = 30.0f;
 
+const float STAGE_HEIGHT = 25.0f;
+
+const float PADDLE_HEIGHT = 5.0f;
+
 Client::Client()
 {
 }
@@ -73,8 +77,8 @@ void Client::update(float deltaTime)
 	{
 		m_myPlayer.yPos += 20.0f * deltaTime;
 
-		if (m_myPlayer.yPos > 20)
-			m_myPlayer.yPos = 20;
+		if (m_myPlayer.yPos > STAGE_HEIGHT - PADDLE_HEIGHT)
+			m_myPlayer.yPos = STAGE_HEIGHT - PADDLE_HEIGHT;
 
 		hasMoved = true;
 	}
@@ -82,8 +86,8 @@ void Client::update(float deltaTime)
 	{
 		m_myPlayer.yPos -= 20.0f * deltaTime;
 
-		if (m_myPlayer.yPos < -20)
-			m_myPlayer.yPos = -20;
+		if (m_myPlayer.yPos < -STAGE_HEIGHT + PADDLE_HEIGHT)
+			m_myPlayer.yPos = -STAGE_HEIGHT + PADDLE_HEIGHT;
 
 		hasMoved = true;
 	}
@@ -91,17 +95,38 @@ void Client::update(float deltaTime)
 	if(hasMoved)
 		SendClientGameObject();
 
+	//Draw stage
+	Gizmos::addAABB(
+		glm::vec3(0),
+		glm::vec3(WIDTH, STAGE_HEIGHT, 1),
+		glm::vec4(1, 1, 1, 1));
+
 	//Draw players
-	int swap = m_clientID == 1 ? 1 : -1;
+	int swap = 0;
+	glm::vec4 colour1;
+	glm::vec4 colour2;
+
+	if (m_clientID == 1)
+	{
+		swap = 1;
+		colour1 = glm::vec4(1, 1, 0, 1);
+		colour2 = glm::vec4(0, 1, 1, 1);
+	}
+	else if (m_clientID == 2)
+	{
+		swap = -1;
+		colour1 = glm::vec4(0, 1, 1, 1);
+		colour2 = glm::vec4(1, 1, 0, 1);
+	}
 
 	Gizmos::addAABBFilled(
 		glm::vec3(-45 * swap, m_myPlayer.yPos, 0),
-		glm::vec3(1, 5, 1),
-		glm::vec4(1, 0, 0, 1));
+		glm::vec3(1, PADDLE_HEIGHT, 1),
+		colour1);
 	Gizmos::addAABBFilled(
 		glm::vec3(45 * swap, m_otherPlayer.yPos, 0),
-		glm::vec3(1, 5, 1),
-		glm::vec4(1, 0, 0, 1));
+		glm::vec3(1, PADDLE_HEIGHT, 1),
+		colour2);
 
 	//Update network
 	HandleNetworkMessages();
