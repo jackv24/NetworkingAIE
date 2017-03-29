@@ -240,10 +240,5 @@ void Client::OnReceivedClientDataPacket(RakNet::Packet* packet)
 
 void Client::SendClientGameObject()
 {
-	RakNet::BitStream bs;
-	bs.Write((RakNet::MessageID)GameMessages::ID_CLIENT_CLIENT_DATA);
-	bs.Write(m_clientID);
-	bs.Write((char*)&m_myGameObject, sizeof(GameObject));
-
-	m_pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_SYSTEM_ADDRESS, true);
+	m_myGameObject.SendData(m_clientID, m_pPeerInterface);
 }

@@ -81,21 +81,13 @@ void Server::HandeNetworkMessages(RakNet::RakPeerInterface* pPeerInterface)
 				//Send initial data
 				for (int i = 1; i <= 2; i++)
 				{
-					GameObject object;
-
 					if (i == 1 && playerOneConnected)
-						object = playerOne;
+						playerOne.SendData(i, pPeerInterface);
 					else if (i == 2 && playerTwoConnected)
-						object = playerTwo;
+						playerTwo.SendData(i, pPeerInterface);
 					else
 						continue;
 
-					RakNet::BitStream bs;
-					bs.Write((RakNet::MessageID)GameMessages::ID_CLIENT_CLIENT_DATA);
-					bs.Write(i);
-					bs.Write((char*)&object, sizeof(GameObject));
-
-					pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_SYSTEM_ADDRESS, true);
 				}
 				break;
 			case ID_DISCONNECTION_NOTIFICATION:

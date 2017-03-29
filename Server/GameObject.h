@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm\glm.hpp>
+
 #include <RakPeerInterface.h>
 
 class GameObject
@@ -13,6 +14,8 @@ public:
 #ifndef NETWORKING_SERVER
 	void Draw();
 #endif // Only relevant for Client
+
+	void SendData(int clientID, RakNet::RakPeerInterface* pPeerInterface);
 
 	glm::vec3 m_position;
 	glm::vec4 m_colour;
