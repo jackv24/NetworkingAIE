@@ -1,7 +1,5 @@
 #pragma once
 
-#include <unordered_map>
-
 #include <RakPeerInterface.h>
 #include "GameObject.h"
 
@@ -16,8 +14,10 @@ public:
 	void SendNewClientID(RakNet::RakPeerInterface* pPeerInterface, RakNet::SystemAddress& address);
 	void HandeNetworkMessages(RakNet::RakPeerInterface* pPeerInterface);
 
-	int nextClientID = 1;
+	bool playerOneConnected = false;
+	bool playerTwoConnected = false;
 
-	std::unordered_map<int, GameObject> clientGameObjects;
+	GameObject playerOne;
+	GameObject playerTwo;
 };
 

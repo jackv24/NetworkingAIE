@@ -42,12 +42,25 @@ void Server::SendNewClientID(RakNet::RakPeerInterface* pPeerInterface, RakNet::S
 {
 	RakNet::BitStream bs;
 	bs.Write((RakNet::MessageID)GameMessages::ID_SERVER_SET_CLIENT_ID);
-	bs.Write(nextClientID);
+	
+	//If there are no player slots available
+	int id = 0;
 
-	clientGameObjects[nextClientID] = GameObject();
+	//New ID is for available slot
+	if (!playerOneConnected)
+	{
+		id = 1;
+		playerOneConnected = true;
+	}
+	else if (!playerTwoConnected)
+	{
+		id = 2;
+		playerTwoConnected = true;
+	}
 
-	nextClientID++;
+	bs.Write(id);
 
+	//Send Set ID packet to specified address
 	pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, address, false);
 }
 
@@ -64,14 +77,25 @@ void Server::HandeNetworkMessages(RakNet::RakPeerInterface* pPeerInterface)
 			case ID_NEW_INCOMING_CONNECTION:
 				std::cout << "A connection is incoming." << std::endl;
 				SendNewClientID(pPeerInterface, packet->systemAddress);
-				for (auto& client : clientGameObjects)
+
+				//Send initial data
+				for (int i = 1; i <= 2; i++)
 				{
+					GameObject object;
+
+					if (i == 1 && playerOneConnected)
+						object = playerOne;
+					else if (i == 2 && playerTwoConnected)
+						object = playerTwo;
+					else
+						continue;
+
 					RakNet::BitStream bs;
 					bs.Write((RakNet::MessageID)GameMessages::ID_CLIENT_CLIENT_DATA);
-					bs.Write(client.first);
-					bs.Write((char*)&client.second, sizeof(GameObject));
+					bs.Write(i);
+					bs.Write((char*)&object, sizeof(GameObject));
 
-					pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, false);
+					pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_SYSTEM_ADDRESS, true);
 				}
 				break;
 			case ID_DISCONNECTION_NOTIFICATION:
@@ -80,51 +104,36 @@ void Server::HandeNetworkMessages(RakNet::RakPeerInterface* pPeerInterface)
 			case ID_CONNECTION_LOST:
 			{
 				std::cout << "A client lost the connection." << std::endl;
-
-				int clientID = 0;
-
-				for (auto& client : clientGameObjects)
-				{
-					if (client.second.m_networkAddress == packet->systemAddress)
-					{
-						clientID = client.first;
-						break;
-					}
-				}
-
-				if (clientID > 0)
-				{
-					RakNet::BitStream bs;
-					bs.Write((RakNet::MessageID)GameMessages::ID_SERVER_CLIENT_DISCONNECTED);
-					bs.Write(clientID);
-
-					pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_SYSTEM_ADDRESS, true);
-				
-					clientGameObjects.erase(clientID);
-				}
-
 				break;
 			}
 			case ID_CLIENT_CLIENT_DATA:
 			{
-				RakNet::BitStream bs(packet->data, packet->length, false);
-				pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, true);
+				RakNet::BitStream bsIn(packet->data, packet->length, false);
+				//Message was identified, so remove message ID from packet
+				bsIn.IgnoreBytes(sizeof(RakNet::MessageID));
 
-				bs.IgnoreBytes(sizeof(RakNet::MessageID));
+				//Get client ID
+				int clientID = 0;
+				bsIn.Read(clientID);
 
-				int clientID;
-				bs.Read(clientID);
+				//Make sure this client is valid
+				if (clientID > 0)
+				{
+					//Read data into either player one or two
+					if(clientID == 1)
+						bsIn.Read((char*)&playerOne, sizeof(GameObject));
+					else if(clientID == 2)
+						bsIn.Read((char*)&playerTwo, sizeof(GameObject));
 
-				GameObject clientData;
-				bs.Read((char*)&clientData, sizeof(GameObject));
-
-				clientGameObjects[clientID] = clientData;
-				clientGameObjects[clientID].m_networkAddress = packet->systemAddress;
-
-				//Output gameobject information to the console
-				std::cout << "Client " << clientID <<
-					" at: " << clientData.m_position.x << " " << clientData.m_position.z << std::endl;
-
+					//Relay data
+					RakNet::BitStream bsOut(packet->data, packet->length, false);
+					pPeerInterface->Send(&bsOut, HIGH_PRIORITY, RELIABLE_ORDERED, 0, packet->systemAddress, true);
+				
+					//Print data to console for debugging
+					GameObject client = clientID == 1 ? playerOne : playerTwo;
+					std::cout << "Client " << clientID <<
+						" at: " << client.m_position.x << " " << client.m_position.z << std::endl;
+				}
 				break;
 			}
 			default:

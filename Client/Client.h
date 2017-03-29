@@ -1,7 +1,5 @@
 #pragma once
 
-#include <unordered_map>
-
 #include "Application.h"
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
@@ -43,9 +41,8 @@ protected:
 	const char* IP = "127.0.0.1";
 	const unsigned short PORT = 5456;
 
+	int m_clientID = 0;
 	GameObject m_myGameObject;
 
-	int m_myClientID;
-
-	std::unordered_map<int, GameObject> m_otherClientGameObjects;
+	GameObject m_otherGameObject;
 };

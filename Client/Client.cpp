@@ -102,12 +102,9 @@ void Client::update(float deltaTime)
 	if(hasMoved)
 		SendClientGameObject();
 
+	//Draw players
 	m_myGameObject.Draw();
-
-	for (auto& otherClient : m_otherClientGameObjects)
-	{
-		otherClient.second.Draw();
-	}
+	m_otherGameObject.Draw();
 
 	//Update network
 	HandleNetworkMessages();
@@ -199,18 +196,6 @@ void Client::HandleNetworkMessages()
 		case ID_CLIENT_CLIENT_DATA:
 			OnReceivedClientDataPacket(packet);
 			break;
-		case ID_SERVER_CLIENT_DISCONNECTED:
-		{
-			RakNet::BitStream bsIn(packet->data, packet->length, false);
-			bsIn.IgnoreBytes(sizeof(RakNet::MessageID));
-
-			int clientID;
-			bsIn.Read(clientID);
-			
-			m_otherClientGameObjects.erase(clientID);
-
-			break;
-		}
 		default:
 			std::cout << "Received a message with an unknown ID: " << packet->data[0];
 			break;
@@ -222,11 +207,12 @@ void Client::OnSetClientIDPacket(RakNet::Packet* packet)
 {
 	RakNet::BitStream bsIn(packet->data, packet->length, false);
 	bsIn.IgnoreBytes(sizeof(RakNet::MessageID));
-	bsIn.Read(m_myClientID);
+	bsIn.Read(m_clientID);
 
-	m_myGameObject.m_colour = colours[m_myClientID % 8];
-
-	std::cout << "Set my client ID to: " << m_myClientID << std::endl;
+	std::cout << "Set my client ID to: " << m_clientID << std::endl;
+	
+	if (m_clientID == 0)
+		std::cout << "ID was zero - player not accepted" << std::endl;
 }
 
 void Client::OnReceivedClientDataPacket(RakNet::Packet* packet)
@@ -237,17 +223,18 @@ void Client::OnReceivedClientDataPacket(RakNet::Packet* packet)
 	int clientID;
 	bsIn.Read(clientID);
 
-	//If the client ID does not match our ID, update our client GameObject information
-	if (clientID != m_myClientID)
+	//Make sure packet was received from one of the two players
+	if (clientID != 0)
 	{
-		GameObject clientData;
-		bsIn.Read((char*)&clientData, sizeof(GameObject));
+		//If the client ID does not match our ID, update our client GameObject information
+		if (clientID != m_clientID)
+		{
+			bsIn.Read((char*)&m_otherGameObject, sizeof(GameObject));
 
-		m_otherClientGameObjects[clientID] = clientData;
-
-		//Output gameobject information to the console
-		std::cout << "Client " << clientID <<
-			" at: " << clientData.m_position.x << " " << clientData.m_position.z << std::endl;
+			//Output gameobject information to the console
+			std::cout << "Client " << clientID <<
+				" at: " << m_otherGameObject.m_position.x << " " << m_otherGameObject.m_position.z << std::endl;
+		}
 	}
 }
 
@@ -255,7 +242,7 @@ void Client::SendClientGameObject()
 {
 	RakNet::BitStream bs;
 	bs.Write((RakNet::MessageID)GameMessages::ID_CLIENT_CLIENT_DATA);
-	bs.Write(m_myClientID);
+	bs.Write(m_clientID);
 	bs.Write((char*)&m_myGameObject, sizeof(GameObject));
 
 	m_pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_SYSTEM_ADDRESS, true);

@@ -12,11 +12,9 @@ public:
 
 #ifndef NETWORKING_SERVER
 	void Draw();
-#endif // !NETWORKING_SERVER
+#endif // Only relevant for Client
 
 	glm::vec3 m_position;
 	glm::vec4 m_colour;
-
-	RakNet::SystemAddress m_networkAddress;
 };
 
