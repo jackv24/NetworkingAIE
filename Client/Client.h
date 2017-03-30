@@ -7,6 +7,7 @@
 #include <RakPeerInterface.h>
 
 #include <Player.h>
+#include <Ball.h>
 
 class Client : public aie::Application {
 public:
@@ -27,6 +28,7 @@ public:
 
 	void OnSetClientIDPacket(RakNet::Packet* packet);
 	void OnReceivedClientDataPacket(RakNet::Packet* packet);
+	void OnReceivedBallDataPacket(RakNet::Packet* packet);
 
 	void SendClientGameObject();
 
@@ -43,4 +45,7 @@ protected:
 	Player m_myPlayer;
 
 	Player m_otherPlayer;
+
+	Ball ballOne;
+	Ball ballTwo;
 };

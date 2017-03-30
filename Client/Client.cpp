@@ -6,18 +6,12 @@
 
 #include "Client.h"
 #include <GameMessages.h>
+#include <GameConstants.h>
 
 using glm::vec3;
 using glm::vec4;
 using glm::mat4;
 using aie::Gizmos;
-
-const float WIDTH = 50.0f;
-const float HEIGHT = 30.0f;
-
-const float STAGE_HEIGHT = 25.0f;
-
-const float PADDLE_HEIGHT = 5.0f;
 
 Client::Client()
 {
@@ -42,6 +36,9 @@ bool Client::startup()
 										  0.1f, 1000.f);
 
 	srand((unsigned int)time(NULL));
+
+	m_myPlayer.yPos = 0;
+	m_otherPlayer.yPos = 0;
 
 	//Connect to server
 	HandleNetworkConnection();
@@ -95,10 +92,13 @@ void Client::update(float deltaTime)
 	if(hasMoved)
 		SendClientGameObject();
 
+	//Update network
+	HandleNetworkMessages();
+
 	//Draw stage
 	Gizmos::addAABB(
 		glm::vec3(0),
-		glm::vec3(WIDTH, STAGE_HEIGHT, 1),
+		glm::vec3(GAME_WIDTH, STAGE_HEIGHT, 1),
 		glm::vec4(1, 1, 1, 1));
 
 	//Draw players
@@ -120,16 +120,17 @@ void Client::update(float deltaTime)
 	}
 
 	Gizmos::addAABBFilled(
-		glm::vec3(-45 * swap, m_myPlayer.yPos, 0),
-		glm::vec3(1, PADDLE_HEIGHT, 1),
+		glm::vec3(-PADDLE_DISTANCE * swap, m_myPlayer.yPos, 0),
+		glm::vec3(PADDLE_WIDTH, PADDLE_HEIGHT, 1),
 		colour1);
 	Gizmos::addAABBFilled(
-		glm::vec3(45 * swap, m_otherPlayer.yPos, 0),
-		glm::vec3(1, PADDLE_HEIGHT, 1),
+		glm::vec3(PADDLE_DISTANCE * swap, m_otherPlayer.yPos, 0),
+		glm::vec3(PADDLE_WIDTH, PADDLE_HEIGHT, 1),
 		colour2);
 
-	//Update network
-	HandleNetworkMessages();
+	//Draw balls
+	Gizmos::addSphere(glm::vec3(ballOne.m_position, 0), BALL_RADIUS, 4, 4, glm::vec4(1));
+	Gizmos::addSphere(glm::vec3(ballTwo.m_position, 0), BALL_RADIUS, 4, 4, glm::vec4(1));
 }
 
 void Client::draw()
@@ -143,7 +144,7 @@ void Client::draw()
 										  getWindowWidth() / (float)getWindowHeight(),
 										  0.1f, 1000.f);*/
 
-	m_projectionMatrix = glm::ortho(-WIDTH, WIDTH, -HEIGHT, HEIGHT, 0.0f, 1000.0f);
+	m_projectionMatrix = glm::ortho(-GAME_WIDTH, GAME_WIDTH, -GAME_HEIGHT, GAME_HEIGHT, 0.0f, 1000.0f);
 
 	Gizmos::draw(m_projectionMatrix * m_viewMatrix);
 }
@@ -220,6 +221,9 @@ void Client::HandleNetworkMessages()
 		case ID_CLIENT_PLAYER_DATA:
 			OnReceivedClientDataPacket(packet);
 			break;
+		case ID_SERVER_BALL_DATA:
+			OnReceivedBallDataPacket(packet);
+			break;
 		default:
 			std::cout << "Received a message with an unknown ID: " << packet->data[0];
 			break;
@@ -253,12 +257,28 @@ void Client::OnReceivedClientDataPacket(RakNet::Packet* packet)
 		//If the client ID does not match our ID, update our client GameObject information
 		if (clientID != m_clientID)
 		{
-			bsIn.Read((char*)&m_otherPlayer, sizeof(Player));
+			bsIn.Read(m_otherPlayer.yPos);
 
 			std::cout << "Client " << clientID <<
 				" at: " << m_otherPlayer.yPos << std::endl;
 		}
 	}
+}
+
+void Client::OnReceivedBallDataPacket(RakNet::Packet* packet)
+{
+	RakNet::BitStream bsIn(packet->data, packet->length, false);
+	bsIn.IgnoreBytes(sizeof(RakNet::MessageID));
+
+	int id;
+	bsIn.Read(id);
+
+	if (id == 1)
+		bsIn.Read((char*)&ballOne.m_position, sizeof(glm::vec2));
+	else if (id == 2)
+		bsIn.Read((char*)&ballTwo.m_position, sizeof(glm::vec2));
+	else
+		std::cout << "Invalid Ball ID: " << id << std::endl;
 }
 
 void Client::SendClientGameObject()

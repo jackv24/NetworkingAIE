@@ -19,7 +19,7 @@ void Player::SendData(int clientID, RakNet::RakPeerInterface* pPeerInterface)
 
 	//Write client ID and data to stream
 	bs.Write(clientID);
-	bs.Write((char*)this, sizeof(Player));
+	bs.Write(yPos);
 
 	//Broadcast packet (should be picked up by the server)
 	pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_SYSTEM_ADDRESS, true);

@@ -1,8 +1,11 @@
 #pragma once
 
 #include <RakPeerInterface.h>
+#include <glm\glm.hpp>
+
 #include "GameObject.h"
 #include "Player.h"
+#include "Ball.h"
 
 class Server
 {
@@ -10,15 +13,21 @@ public:
 	Server();
 	~Server();
 
+	void Startup();
 	void Run();
 
 	void SendNewClientID(RakNet::RakPeerInterface* pPeerInterface, RakNet::SystemAddress& address);
-	void HandeNetworkMessages(RakNet::RakPeerInterface* pPeerInterface);
+	void HandleNetworkMessages(RakNet::RakPeerInterface* pPeerInterface);
 
-	bool playerOneConnected = false;
-	bool playerTwoConnected = false;
+	void SimulateGame(RakNet::RakPeerInterface* pPeerInterface);
+
+	bool playerOneConnected;
+	bool playerTwoConnected;
 
 	Player playerOne;
 	Player playerTwo;
+
+	Ball ballOne;
+	Ball ballTwo;
 };
 

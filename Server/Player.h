@@ -10,8 +10,8 @@ public:
 
 	void SendData(int clientID, RakNet::RakPeerInterface* pPeerInterface);
 
-	float yPos = 0;
+	float yPos;
 
-	int score = 0;
+	int score;
 };
 

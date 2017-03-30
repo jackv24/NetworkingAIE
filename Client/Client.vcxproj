@@ -89,6 +89,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Server\Ball.cpp" />
     <ClCompile Include="..\Server\GameObject.cpp" />
     <ClCompile Include="..\Server\Player.cpp" />
     <ClCompile Include="Client.cpp" />
