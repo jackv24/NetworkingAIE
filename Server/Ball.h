@@ -11,7 +11,7 @@ public:
 	~Ball();
 
 #ifdef NETWORKING_SERVER
-	void Update(float deltaTime);
+	void Update(float deltaTime, float leftPaddlePos, float rightPaddlePos);
 	void SendData(RakNet::RakPeerInterface* pPeerInterface);
 #endif
 

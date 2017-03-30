@@ -31,11 +31,7 @@ bool Client::startup()
 
 	// create simple camera transforms
 	m_viewMatrix = glm::lookAt(vec3(0, 0, 50), vec3(0), vec3(0, 1, 0));
-	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f,
-										  getWindowWidth() / (float)getWindowHeight(),
-										  0.1f, 1000.f);
-
-	srand((unsigned int)time(NULL));
+	m_projectionMatrix = glm::ortho(-GAME_WIDTH, GAME_WIDTH, -GAME_HEIGHT, GAME_HEIGHT, 0.0f, 1000.0f);
 
 	m_myPlayer.yPos = 0;
 	m_otherPlayer.yPos = 0;
@@ -140,10 +136,6 @@ void Client::draw()
 	clearScreen();
 
 	// update perspective in case window resized
-	/*m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f,
-										  getWindowWidth() / (float)getWindowHeight(),
-										  0.1f, 1000.f);*/
-
 	m_projectionMatrix = glm::ortho(-GAME_WIDTH, GAME_WIDTH, -GAME_HEIGHT, GAME_HEIGHT, 0.0f, 1000.0f);
 
 	Gizmos::draw(m_projectionMatrix * m_viewMatrix);

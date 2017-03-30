@@ -34,8 +34,8 @@ void Server::Startup()
 	playerOne.yPos = 0;
 	playerTwo.yPos = 0;
 
-	ballOne = Ball(1, glm::vec2(-5, 0), glm::vec2(-30, 20));
-	ballTwo = Ball(2, glm::vec2(5, 0), glm::vec2(30, -20));
+	ballOne = Ball(1, glm::vec2(-5, 0), glm::vec2(-30, 30));
+	ballTwo = Ball(2, glm::vec2(5, 0), glm::vec2(30, -30));
 }
 
 void Server::Run()
@@ -177,8 +177,11 @@ void Server::SimulateGame(RakNet::RakPeerInterface* pPeerInterface)
 		nextSendTime = elapsedTime + BALL_SEND_INTERVAL * 1000;
 
 		//Update balls
-		ballOne.Update(BALL_SEND_INTERVAL);
-		ballTwo.Update(BALL_SEND_INTERVAL);
+		if (playerOneConnected && playerTwoConnected)
+		{
+			ballOne.Update(BALL_SEND_INTERVAL, playerOne.yPos, playerTwo.yPos);
+			ballTwo.Update(BALL_SEND_INTERVAL, playerOne.yPos, playerTwo.yPos);
+		}
 
 		//Send balls data
 		ballOne.SendData(pPeerInterface);
