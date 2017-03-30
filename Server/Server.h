@@ -19,7 +19,7 @@ public:
 	void SendNewClientID(RakNet::RakPeerInterface* pPeerInterface, RakNet::SystemAddress& address);
 	void HandleNetworkMessages(RakNet::RakPeerInterface* pPeerInterface);
 
-	void SimulateGame(RakNet::RakPeerInterface* pPeerInterface);
+	static void SimulateGame(Server* s, RakNet::RakPeerInterface* pPeerInterface);
 
 	bool playerOneConnected;
 	bool playerTwoConnected;

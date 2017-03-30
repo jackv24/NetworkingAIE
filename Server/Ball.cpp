@@ -1,3 +1,4 @@
+#include <iostream>
 #include <BitStream.h>
 
 #include "GameMessages.h"
@@ -11,26 +12,30 @@ Ball::Ball()
 
 Ball::Ball(int id, glm::vec2 position, glm::vec2 initialVelocity)
 {
-	m_velocity = initialVelocity;
-
 	m_id = id;
 	m_position = position;
+	m_velocity = initialVelocity;
 }
 
 Ball::~Ball()
 {
 }
 
-#ifdef NETWORKING_SERVER
 void Ball::Update(float deltaTime, float leftPaddlePos, float rightPaddlePos)
 {
 	m_position += m_velocity * deltaTime;
 
 	//Bounce off stage top and bottom
 	if (m_position.y + BALL_RADIUS > STAGE_HEIGHT && m_velocity.y > 0)
+	{
 		m_velocity.y *= -1;
+		m_hasBounced = true;
+	}
 	else if (m_position.y - BALL_RADIUS < -STAGE_HEIGHT && m_velocity.y < 0)
+	{
 		m_velocity.y *= -1;
+		m_hasBounced = true;
+	}
 
 	//Bounce off paddles
 	//Right paddle horizontal check
@@ -40,7 +45,10 @@ void Ball::Update(float deltaTime, float leftPaddlePos, float rightPaddlePos)
 	{
 		//Vertical check
 		if (m_position.y > leftPaddlePos - PADDLE_HEIGHT && m_position.y < leftPaddlePos + PADDLE_HEIGHT)
+		{
 			m_velocity.x *= -1;
+			m_hasBounced = true;
+		}
 	}
 	//Left paddle horizontal check
 	else if (
@@ -50,11 +58,23 @@ void Ball::Update(float deltaTime, float leftPaddlePos, float rightPaddlePos)
 	{
 		//Vertical check
 		if (m_position.y > rightPaddlePos - PADDLE_HEIGHT && m_position.y < rightPaddlePos + PADDLE_HEIGHT)
+		{
 			m_velocity.x *= -1;
+			m_hasBounced = true;
+		}
 	}
+
+#ifdef NETWORKING_SERVER
+	if (m_hasBounced)
+	{
+		m_hasBounced = false;
+		SendData();
+	}
+#endif
 }
 
-void Ball::SendData(RakNet::RakPeerInterface* pPeerInterface)
+#ifdef NETWORKING_SERVER
+void Ball::SendData()
 {
 	//Create new bitstream with client data ID
 	RakNet::BitStream bs;
@@ -63,6 +83,9 @@ void Ball::SendData(RakNet::RakPeerInterface* pPeerInterface)
 	//Write client ID and data to stream
 	bs.Write(m_id);
 	bs.Write((char*)&m_position, sizeof(glm::vec2));
+	bs.Write((char*)&m_velocity, sizeof(glm::vec2));
+
+	std::cout << "Sent ball data" << m_id << std::endl;
 
 	//Broadcast packet (should be picked up by the server)
 	pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_SYSTEM_ADDRESS, true);

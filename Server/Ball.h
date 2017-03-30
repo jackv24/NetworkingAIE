@@ -10,15 +10,19 @@ public:
 	Ball(int id, glm::vec2 position, glm::vec2 initialVelocity);
 	~Ball();
 
-#ifdef NETWORKING_SERVER
 	void Update(float deltaTime, float leftPaddlePos, float rightPaddlePos);
-	void SendData(RakNet::RakPeerInterface* pPeerInterface);
-#endif
 
-	glm::vec2 m_velocity;
+#ifdef NETWORKING_SERVER
+	void SendData();
+
+	RakNet::RakPeerInterface* pPeerInterface;
+#endif
 
 	//Data to send/recieve
 	int m_id;
 	glm::vec2 m_position;
+	glm::vec2 m_velocity;
+
+	bool m_hasBounced;
 };
 

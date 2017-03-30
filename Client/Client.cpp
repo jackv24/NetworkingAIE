@@ -64,6 +64,7 @@ void Client::update(float deltaTime)
 	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))
 		quit();
 
+	//Move paddle
 	bool hasMoved = false;
 
 	if (input->isKeyDown(aie::INPUT_KEY_UP))
@@ -90,6 +91,14 @@ void Client::update(float deltaTime)
 
 	//Update network
 	HandleNetworkMessages();
+
+	//Update balls
+	ballOne.Update(deltaTime,
+		m_clientID == 1 ? m_myPlayer.yPos : m_otherPlayer.yPos,
+		m_clientID == 1 ? m_otherPlayer.yPos : m_myPlayer.yPos);
+	ballTwo.Update(deltaTime,
+		m_clientID == 1 ? m_myPlayer.yPos : m_otherPlayer.yPos,
+		m_clientID == 1 ? m_otherPlayer.yPos : m_myPlayer.yPos);
 
 	//Draw stage
 	Gizmos::addAABB(
@@ -266,9 +275,15 @@ void Client::OnReceivedBallDataPacket(RakNet::Packet* packet)
 	bsIn.Read(id);
 
 	if (id == 1)
+	{
 		bsIn.Read((char*)&ballOne.m_position, sizeof(glm::vec2));
+		bsIn.Read((char*)&ballOne.m_velocity, sizeof(glm::vec2));
+	}
 	else if (id == 2)
+	{
 		bsIn.Read((char*)&ballTwo.m_position, sizeof(glm::vec2));
+		bsIn.Read((char*)&ballTwo.m_velocity, sizeof(glm::vec2));
+	}
 	else
 		std::cout << "Invalid Ball ID: " << id << std::endl;
 }

@@ -9,14 +9,7 @@
 #include <BitStream.h>
 #include "GameMessages.h"
 
-//For game simulation loop
-std::chrono::high_resolution_clock timer;
-double deltaTime = 0;
-
-double elapsedTime = 0;
-double nextSendTime = 0;
-
-const float BALL_SEND_INTERVAL = 0.01f;
+const float SERVER_UPDATE_INTERVAL = 0.001f;
 
 Server::Server()
 {
@@ -34,8 +27,8 @@ void Server::Startup()
 	playerOne.yPos = 0;
 	playerTwo.yPos = 0;
 
-	ballOne = Ball(1, glm::vec2(-5, 0), glm::vec2(-30, 30));
-	ballTwo = Ball(2, glm::vec2(5, 0), glm::vec2(30, -30));
+	ballOne = Ball(1, glm::vec2(-5, 0), glm::vec2(-5, 5));
+	ballTwo = Ball(2, glm::vec2(5, 0), glm::vec2(5, -5));
 }
 
 void Server::Run()
@@ -56,11 +49,19 @@ void Server::Run()
 	pPeerInterface->Startup(32, &sd, 1);
 	pPeerInterface->SetMaximumIncomingConnections(32);
 
+	//Set peer interface to send data for balls
+	ballOne.pPeerInterface = pPeerInterface;
+	ballTwo.pPeerInterface = pPeerInterface;
+
+	//Balls "have bounced" to start, so they send initial data
+	ballOne.m_hasBounced = true;
+	ballTwo.m_hasBounced = true;
+
+	std::thread tickThread(SimulateGame, this, pPeerInterface);
+
 	while (true)
 	{
 		HandleNetworkMessages(pPeerInterface);
-
-		SimulateGame(pPeerInterface);
 	}
 }
 
@@ -159,37 +160,18 @@ void Server::HandleNetworkMessages(RakNet::RakPeerInterface* pPeerInterface)
 	}
 }
 
-void Server::SimulateGame(RakNet::RakPeerInterface* pPeerInterface)
+void Server::SimulateGame(Server* s, RakNet::RakPeerInterface* pPeerInterface)
 {
-	auto start = timer.now();
-
-	/*static float dts[65536];
-	static int idt = 0;
-	dts[idt] = deltaTime;
-	idt++;
-	if (idt == 65536)
-		std::cout << "done" << std::endl;*/
-
-
-	//Only do every so often
-	if (elapsedTime >= nextSendTime)
+	while (true)
 	{
-		nextSendTime = elapsedTime + BALL_SEND_INTERVAL * 1000;
-
 		//Update balls
-		if (playerOneConnected && playerTwoConnected)
+		if (s->playerOneConnected && s->playerTwoConnected)
 		{
-			ballOne.Update(BALL_SEND_INTERVAL, playerOne.yPos, playerTwo.yPos);
-			ballTwo.Update(BALL_SEND_INTERVAL, playerOne.yPos, playerTwo.yPos);
+			//Update balls on server, send data when they bounce
+			s->ballOne.Update(SERVER_UPDATE_INTERVAL, s->playerOne.yPos, s->playerTwo.yPos);
+			s->ballTwo.Update(SERVER_UPDATE_INTERVAL, s->playerOne.yPos, s->playerTwo.yPos);
 		}
 
-		//Send balls data
-		ballOne.SendData(pPeerInterface);
-		ballTwo.SendData(pPeerInterface);
+		std::this_thread::sleep_for(std::chrono::milliseconds((int)(SERVER_UPDATE_INTERVAL * 1000)));
 	}
-
-	auto stop = timer.now();
-
-	deltaTime = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(stop - start).count();
-	elapsedTime += deltaTime;
 }
