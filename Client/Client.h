@@ -30,13 +30,14 @@ public:
 	void OnReceivedClientDataPacket(RakNet::Packet* packet);
 	void OnReceivedBallDataPacket(RakNet::Packet* packet);
 
+	const char* IP = "127.0.0.1";
+
 protected:
 	glm::mat4	m_viewMatrix;
 	glm::mat4	m_projectionMatrix;
 
 	RakNet::RakPeerInterface* m_pPeerInterface;
 
-	const char* IP = "127.0.0.1";
 	const unsigned short PORT = 5456;
 
 	int m_clientID = 0;
