@@ -64,30 +64,35 @@ void Client::update(float deltaTime)
 	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))
 		quit();
 
+	bool buttonUpdate = false;
+
 	//Move paddle
-	bool hasMoved = false;
-
-	if (input->isKeyDown(aie::INPUT_KEY_UP))
-	{
-		m_myPlayer.yPos += 20.0f * deltaTime;
-
-		if (m_myPlayer.yPos > STAGE_HEIGHT - PADDLE_HEIGHT)
-			m_myPlayer.yPos = STAGE_HEIGHT - PADDLE_HEIGHT;
-
-		hasMoved = true;
+	if(input->wasKeyPressed(aie::INPUT_KEY_UP))
+	{ 
+		buttonUpdate = true;
+		m_myPlayer.moveDir = 1;
 	}
-	if (input->isKeyDown(aie::INPUT_KEY_DOWN))
+	else if (input->wasKeyReleased(aie::INPUT_KEY_UP))
 	{
-		m_myPlayer.yPos -= 20.0f * deltaTime;
-
-		if (m_myPlayer.yPos < -STAGE_HEIGHT + PADDLE_HEIGHT)
-			m_myPlayer.yPos = -STAGE_HEIGHT + PADDLE_HEIGHT;
-
-		hasMoved = true;
+		buttonUpdate = true;
+		m_myPlayer.moveDir = 0;
+	}
+	else if (input->wasKeyPressed(aie::INPUT_KEY_DOWN))
+	{
+		buttonUpdate = true;
+		m_myPlayer.moveDir = -1;
+	}
+	else if (input->wasKeyReleased(aie::INPUT_KEY_DOWN))
+	{
+		buttonUpdate = true;
+		m_myPlayer.moveDir = 0;
 	}
 
-	if(hasMoved)
-		SendClientGameObject();
+	if (buttonUpdate)
+		m_myPlayer.SendData(m_clientID, m_pPeerInterface);
+
+	m_myPlayer.Move(deltaTime);
+	m_otherPlayer.Move(deltaTime);
 
 	//Update network
 	HandleNetworkMessages();
@@ -217,7 +222,7 @@ void Client::HandleNetworkMessages()
 		}
 		case ID_SERVER_SET_CLIENT_ID:
 			OnSetClientIDPacket(packet);
-			SendClientGameObject();
+			m_myPlayer.SendData(m_clientID, m_pPeerInterface);
 			break;
 		case ID_CLIENT_PLAYER_DATA:
 			OnReceivedClientDataPacket(packet);
@@ -258,6 +263,7 @@ void Client::OnReceivedClientDataPacket(RakNet::Packet* packet)
 		//If the client ID does not match our ID, update our client GameObject information
 		if (clientID != m_clientID)
 		{
+			bsIn.Read(m_otherPlayer.moveDir);
 			bsIn.Read(m_otherPlayer.yPos);
 
 			std::cout << "Client " << clientID <<
@@ -286,9 +292,4 @@ void Client::OnReceivedBallDataPacket(RakNet::Packet* packet)
 	}
 	else
 		std::cout << "Invalid Ball ID: " << id << std::endl;
-}
-
-void Client::SendClientGameObject()
-{
-	m_myPlayer.SendData(m_clientID, m_pPeerInterface);
 }

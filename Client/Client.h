@@ -30,8 +30,6 @@ public:
 	void OnReceivedClientDataPacket(RakNet::Packet* packet);
 	void OnReceivedBallDataPacket(RakNet::Packet* packet);
 
-	void SendClientGameObject();
-
 protected:
 	glm::mat4	m_viewMatrix;
 	glm::mat4	m_projectionMatrix;

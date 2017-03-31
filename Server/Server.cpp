@@ -137,10 +137,16 @@ void Server::HandleNetworkMessages(RakNet::RakPeerInterface* pPeerInterface)
 			if (clientID > 0)
 			{
 				//Read data into either player one or two
-				if(clientID == 1)
+				if (clientID == 1)
+				{
+					bsIn.Read(playerOne.moveDir);
 					bsIn.Read(playerOne.yPos);
-				else if(clientID == 2)
+				}
+				else if (clientID == 2)
+				{
+					bsIn.Read(playerOne.moveDir);
 					bsIn.Read(playerTwo.yPos);
+				}
 
 				//Relay data
 				RakNet::BitStream bsOut(packet->data, packet->length, false);
@@ -162,16 +168,28 @@ void Server::HandleNetworkMessages(RakNet::RakPeerInterface* pPeerInterface)
 
 void Server::SimulateGame(Server* s, RakNet::RakPeerInterface* pPeerInterface)
 {
+	std::chrono::high_resolution_clock timer;
+	
+	float deltaTime = 0;
+
 	while (true)
 	{
+		auto start = timer.now();
+
 		//Update balls
 		if (s->playerOneConnected && s->playerTwoConnected)
 		{
+			s->playerOne.Move(deltaTime);
+			s->playerTwo.Move(deltaTime);
+
 			//Update balls on server, send data when they bounce
-			s->ballOne.Update(SERVER_UPDATE_INTERVAL, s->playerOne.yPos, s->playerTwo.yPos);
-			s->ballTwo.Update(SERVER_UPDATE_INTERVAL, s->playerOne.yPos, s->playerTwo.yPos);
+			s->ballOne.Update(deltaTime, s->playerOne.yPos, s->playerTwo.yPos);
+			s->ballTwo.Update(deltaTime, s->playerOne.yPos, s->playerTwo.yPos);
 		}
 
 		std::this_thread::sleep_for(std::chrono::milliseconds((int)(SERVER_UPDATE_INTERVAL * 1000)));
+		auto stop = timer.now();
+
+		deltaTime = std::chrono::duration_cast<std::chrono::duration<float>>(stop - start).count();
 	}
 }

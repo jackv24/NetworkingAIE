@@ -204,10 +204,10 @@ protected:
 private:
 
 	enum EKeyStatus {
-		JUST_RELEASED,
 		UP,
-		JUST_PRESSED,
+		JUST_RELEASED,
 		DOWN,
+		JUST_PRESSED
 	};
 
 	// constructor private for singleton
