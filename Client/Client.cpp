@@ -100,10 +100,12 @@ void Client::update(float deltaTime)
 	//Update balls
 	ballOne.Update(deltaTime,
 		m_clientID == 1 ? m_myPlayer.yPos : m_otherPlayer.yPos,
-		m_clientID == 1 ? m_otherPlayer.yPos : m_myPlayer.yPos);
+		m_clientID == 1 ? m_otherPlayer.yPos : m_myPlayer.yPos,
+		&m_bricks);
 	ballTwo.Update(deltaTime,
 		m_clientID == 1 ? m_myPlayer.yPos : m_otherPlayer.yPos,
-		m_clientID == 1 ? m_otherPlayer.yPos : m_myPlayer.yPos);
+		m_clientID == 1 ? m_otherPlayer.yPos : m_myPlayer.yPos,
+		&m_bricks);
 
 	//Draw stage
 	Gizmos::addAABB(
@@ -119,14 +121,14 @@ void Client::update(float deltaTime)
 	if (m_clientID == 1)
 	{
 		swap = 1;
-		colour1 = glm::vec4(1, 1, 0, 1);
-		colour2 = glm::vec4(0, 1, 1, 1);
+		colour1 = glm::vec4(0.26f, 0.55f, 0.8f, 1);
+		colour2 = glm::vec4(0.78f, 0.23f, 0.25f, 1);
 	}
 	else if (m_clientID == 2)
 	{
 		swap = -1;
-		colour1 = glm::vec4(0, 1, 1, 1);
-		colour2 = glm::vec4(1, 1, 0, 1);
+		colour1 = glm::vec4(0.78f, 0.23f, 0.25f, 1);
+		colour2 = glm::vec4(0.26f, 0.55f, 0.8f, 1);
 	}
 
 	Gizmos::addAABBFilled(
@@ -141,6 +143,15 @@ void Client::update(float deltaTime)
 	//Draw balls
 	Gizmos::addSphere(glm::vec3(ballOne.m_position, 0), BALL_RADIUS, 4, 4, glm::vec4(1));
 	Gizmos::addSphere(glm::vec3(ballTwo.m_position, 0), BALL_RADIUS, 4, 4, glm::vec4(1));
+
+	//Draw bricks
+	for (auto brick : m_bricks)
+	{
+		Gizmos::addAABBFilled(
+			glm::vec3(brick.second.m_position, 0),
+			glm::vec3(BRICK_WIDTH, BRICK_HEIGHT, 1),
+			brick.second.m_colour);
+	}
 }
 
 void Client::draw()
@@ -230,6 +241,9 @@ void Client::HandleNetworkMessages()
 		case ID_SERVER_BALL_DATA:
 			OnReceivedBallDataPacket(packet);
 			break;
+		case ID_SERVER_BRICK_DATA:
+			OnReceivedBrickDataPacket(packet);
+			break;
 		default:
 			std::cout << "Received a message with an unknown ID: " << packet->data[0];
 			break;
@@ -292,4 +306,16 @@ void Client::OnReceivedBallDataPacket(RakNet::Packet* packet)
 	}
 	else
 		std::cout << "Invalid Ball ID: " << id << std::endl;
+}
+
+void Client::OnReceivedBrickDataPacket(RakNet::Packet * packet)
+{
+	RakNet::BitStream bsIn(packet->data, packet->length, false);
+	bsIn.IgnoreBytes(sizeof(RakNet::MessageID));
+
+	int id;
+	bsIn.Read(id);
+
+	bsIn.Read((char*)&m_bricks[id].m_position, sizeof(glm::vec2));
+	bsIn.Read((char*)&m_bricks[id].m_colour, sizeof(glm::vec4));
 }

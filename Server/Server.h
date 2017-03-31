@@ -3,9 +3,12 @@
 #include <RakPeerInterface.h>
 #include <glm\glm.hpp>
 
+#include <unordered_map>
+
 #include "GameObject.h"
 #include "Player.h"
 #include "Ball.h"
+#include "Brick.h"
 
 class Server
 {
@@ -19,6 +22,7 @@ public:
 	void SendNewClientID(RakNet::RakPeerInterface* pPeerInterface, RakNet::SystemAddress& address);
 	void HandleNetworkMessages(RakNet::RakPeerInterface* pPeerInterface);
 
+	void GenerateBricks();
 	static void SimulateGame(Server* s, RakNet::RakPeerInterface* pPeerInterface);
 
 	bool playerOneConnected;
@@ -29,5 +33,7 @@ public:
 
 	Ball ballOne;
 	Ball ballTwo;
+
+	std::unordered_map<int, Brick> bricks;
 };
 

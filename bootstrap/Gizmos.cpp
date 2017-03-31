@@ -266,7 +266,7 @@ void Gizmos::addAABBFilled(const glm::vec3& center,
 	vVerts[6] = tempCenter + vX + vZ + vY;
 	vVerts[7] = tempCenter + vX - vZ + vY;
 
-	glm::vec4 vWhite(1,1,1,1);
+	glm::vec4 vWhite(1,1,1,0);
 
 	addLine(vVerts[0], vVerts[1], vWhite, vWhite);
 	addLine(vVerts[1], vVerts[2], vWhite, vWhite);

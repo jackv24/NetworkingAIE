@@ -6,8 +6,11 @@
 
 #include <RakPeerInterface.h>
 
+#include <unordered_map>
+
 #include <Player.h>
 #include <Ball.h>
+#include <Brick.h>
 
 class Client : public aie::Application {
 public:
@@ -29,6 +32,7 @@ public:
 	void OnSetClientIDPacket(RakNet::Packet* packet);
 	void OnReceivedClientDataPacket(RakNet::Packet* packet);
 	void OnReceivedBallDataPacket(RakNet::Packet* packet);
+	void OnReceivedBrickDataPacket(RakNet::Packet* packet);
 
 	const char* IP = "127.0.0.1";
 
@@ -47,4 +51,6 @@ protected:
 
 	Ball ballOne;
 	Ball ballTwo;
+
+	std::unordered_map<int, Brick> m_bricks;
 };

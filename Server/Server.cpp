@@ -8,6 +8,7 @@
 #include <MessageIdentifiers.h>
 #include <BitStream.h>
 #include "GameMessages.h"
+#include "GameConstants.h"
 
 const float SERVER_UPDATE_INTERVAL = 0.001f;
 
@@ -27,8 +28,10 @@ void Server::Startup()
 	playerOne.yPos = 0;
 	playerTwo.yPos = 0;
 
-	ballOne = Ball(1, glm::vec2(-5, 0), glm::vec2(-5, 5));
-	ballTwo = Ball(2, glm::vec2(5, 0), glm::vec2(5, -5));
+	ballOne = Ball(1, glm::vec2(-PADDLE_DISTANCE + PADDLE_WIDTH, 0), glm::vec2(5, 5));
+	ballTwo = Ball(2, glm::vec2(PADDLE_DISTANCE - PADDLE_WIDTH, 0), glm::vec2(-5, -5));
+
+	bricks[1].m_position = glm::vec2(2, 4);
 }
 
 void Server::Run()
@@ -56,6 +59,8 @@ void Server::Run()
 	//Balls "have bounced" to start, so they send initial data
 	ballOne.m_hasBounced = true;
 	ballTwo.m_hasBounced = true;
+
+	GenerateBricks();
 
 	std::thread tickThread(SimulateGame, this, pPeerInterface);
 
@@ -114,6 +119,10 @@ void Server::HandleNetworkMessages(RakNet::RakPeerInterface* pPeerInterface)
 					continue;
 
 			}
+			for (auto brick : bricks)
+			{
+				brick.second.SendData(brick.first, pPeerInterface);
+			}
 			break;
 		case ID_DISCONNECTION_NOTIFICATION:
 			std::cout << "A client has disconnected." << std::endl;
@@ -166,6 +175,70 @@ void Server::HandleNetworkMessages(RakNet::RakPeerInterface* pPeerInterface)
 	}
 }
 
+void Server::GenerateBricks()
+{
+	int level[11][11] = {
+		{ 0, 0, 1, 0, 0, 2, 0, 0, 1, 0, 0 },
+		{ 0, 0, 1, 0, 0, 2, 0, 0, 1, 0, 0 },
+		{ 0, 1, 1, 3, 0, 2, 0, 3, 1, 1, 0 },
+		{ 0, 1, 1, 0, 2, 3, 2, 0, 1, 1, 0 },
+		{ 0, 1, 1, 2, 3, 3, 3, 2, 1, 1, 0 },
+		{ 0, 1, 1, 2, 3, 3, 3, 2, 1, 1, 0 },
+		{ 0, 1, 1, 2, 3, 3, 3, 2, 1, 1, 0 },
+		{ 0, 1, 1, 0, 2, 3, 2, 0, 1, 1, 0 },
+		{ 0, 1, 1, 3, 0, 2, 0, 3, 1, 1, 0 },
+		{ 0, 0, 1, 0, 0, 2, 0, 0, 1, 0, 0 },
+		{ 0, 0, 1, 0, 0, 2, 0, 0, 1, 0, 0 },
+	};
+
+	/*int level[11][11] = {
+	{ 0, 0, 0, 0, 3, 0, 3, 0, 0, 0, 0 },
+	{ 0, 0, 0, 3, 0, 3, 0, 3, 0, 0, 0 },
+	{ 0, 0, 0, 3, 0, 1, 0, 3, 0, 0, 0 },
+	{ 0, 0, 0, 3, 1, 0, 1, 3, 0, 0, 0 },
+	{ 0, 0, 0, 3, 1, 0, 1, 3, 0, 0, 0 },
+	{ 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0 },
+	{ 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0 },
+	{ 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0 },
+	{ 0, 0, 2, 2, 1, 0, 1, 2, 2, 0, 0 },
+	{ 0, 0, 2, 0, 1, 0, 1, 0, 2, 0, 0 },
+	{ 0, 0, 2, 0, 1, 0, 1, 0, 2, 0, 0 },
+	};*/
+
+	int id = 1;
+
+	float offsetX = BRICK_WIDTH * 2 + BRICK_PADDING;
+	float offsetY = BRICK_HEIGHT * 2 + BRICK_PADDING;
+
+	for (int i = 0; i < 11; i++)
+	{
+		for (int j = 0; j < 11; j++)
+		{
+			Brick* brick = &bricks[id];
+
+			brick->m_position = glm::vec2(i * offsetX - (offsetX * 10) / 2, -j * offsetY + (offsetY * 10) / 2);
+
+			switch (level[j][i])
+			{
+			case 0:
+				brick->m_colour = glm::vec4(0.77f, 0.99f, 0.61f, 1);
+				break;
+			case 1:
+				brick->m_colour = glm::vec4(0.43f, 0.92f, 0.97f, 1);
+				break;
+			case 2:
+				brick->m_colour = glm::vec4(0.97f, 0.56f, 0.34f, 1);
+				break;
+			case 3:
+				brick->m_colour = glm::vec4(0.38f, 0.36f, 0.66f, 1);
+				break;
+			}
+
+			id++;
+		}
+	}
+}
+
 void Server::SimulateGame(Server* s, RakNet::RakPeerInterface* pPeerInterface)
 {
 	std::chrono::high_resolution_clock timer;
@@ -183,8 +256,8 @@ void Server::SimulateGame(Server* s, RakNet::RakPeerInterface* pPeerInterface)
 			s->playerTwo.Move(deltaTime);
 
 			//Update balls on server, send data when they bounce
-			s->ballOne.Update(deltaTime, s->playerOne.yPos, s->playerTwo.yPos);
-			s->ballTwo.Update(deltaTime, s->playerOne.yPos, s->playerTwo.yPos);
+			s->ballOne.Update(deltaTime, s->playerOne.yPos, s->playerTwo.yPos, &s->bricks);
+			s->ballTwo.Update(deltaTime, s->playerOne.yPos, s->playerTwo.yPos, &s->bricks);
 		}
 
 		std::this_thread::sleep_for(std::chrono::milliseconds((int)(SERVER_UPDATE_INTERVAL * 1000)));

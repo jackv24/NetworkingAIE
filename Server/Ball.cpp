@@ -21,7 +21,7 @@ Ball::~Ball()
 {
 }
 
-void Ball::Update(float deltaTime, float leftPaddlePos, float rightPaddlePos)
+void Ball::Update(float deltaTime, float leftPaddlePos, float rightPaddlePos, std::unordered_map<int, Brick>* bricks)
 {
 	m_position += m_velocity * deltaTime;
 

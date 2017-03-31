@@ -11,3 +11,7 @@ const float PADDLE_WIDTH = 1.0f;
 const float PADDLE_SPEED = 20.0f;
 
 const float BALL_RADIUS = 1.0f;
+
+const float BRICK_WIDTH = 1.0f;
+const float BRICK_HEIGHT = 2.0f;
+const float BRICK_PADDING = 0.5f;

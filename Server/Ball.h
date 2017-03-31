@@ -2,6 +2,9 @@
 
 #include <RakPeerInterface.h>
 #include <glm\glm.hpp>
+#include <unordered_map>
+
+#include "Brick.h"
 
 class Ball
 {
@@ -10,7 +13,7 @@ public:
 	Ball(int id, glm::vec2 position, glm::vec2 initialVelocity);
 	~Ball();
 
-	void Update(float deltaTime, float leftPaddlePos, float rightPaddlePos);
+	void Update(float deltaTime, float leftPaddlePos, float rightPaddlePos, std::unordered_map<int, Brick>* bricks);
 
 #ifdef NETWORKING_SERVER
 	void SendData();
