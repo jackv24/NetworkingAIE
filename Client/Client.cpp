@@ -147,10 +147,13 @@ void Client::update(float deltaTime)
 	//Draw bricks
 	for (auto brick : m_bricks)
 	{
-		Gizmos::addAABBFilled(
-			glm::vec3(brick.second.m_position, 0),
-			glm::vec3(BRICK_WIDTH, BRICK_HEIGHT, 1),
-			brick.second.m_colour);
+		if (brick.second.m_isAlive)
+		{
+			Gizmos::addAABBFilled(
+				glm::vec3(brick.second.m_position, 0),
+				glm::vec3(BRICK_WIDTH, BRICK_HEIGHT, 1),
+				brick.second.m_colour);
+		}
 	}
 }
 
@@ -318,4 +321,5 @@ void Client::OnReceivedBrickDataPacket(RakNet::Packet * packet)
 
 	bsIn.Read((char*)&m_bricks[id].m_position, sizeof(glm::vec2));
 	bsIn.Read((char*)&m_bricks[id].m_colour, sizeof(glm::vec4));
+	bsIn.Read((char*)&m_bricks[id].m_isAlive, sizeof(bool));
 }

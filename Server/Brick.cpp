@@ -13,10 +13,12 @@ Brick::~Brick()
 {
 }
 
-bool Brick::CheckCollision(glm::vec2 ballPos)
+bool Brick::CheckCollision(glm::vec2 ballPos, glm::vec2 ballVelocity)
 {
-	//NOT SURE IF THIS WORKS YET
-	glm::vec2 pt = ballPos;
+	if (!m_isAlive)
+		return false;
+
+	/*glm::vec2 pt = ballPos;
 
 	float rectRight = m_position.x + BRICK_WIDTH;
 	float rectLeft = m_position.x - BRICK_WIDTH;
@@ -33,9 +35,37 @@ bool Brick::CheckCollision(glm::vec2 ballPos)
 		ballPos.y = rectTop;
 
 	if (glm::distance(pt, ballPos) < BALL_RADIUS)
+	{
+		if (glm::distance(pt.x, ballPos.x) <= glm::distance(pt.y, ballPos.y))
+			return Side;
+		else
+			return Top;
+	}*/
+
+	float ballXMin = ballPos.x - BALL_RADIUS;
+	float ballXMax = ballPos.x + BALL_RADIUS;
+	float ballYMin = ballPos.y - BALL_RADIUS;
+	float ballYMax = ballPos.y + BALL_RADIUS;
+
+	float brickXMin = m_position.x - BRICK_WIDTH;
+	float brickXMax = m_position.x + BRICK_WIDTH;
+	float brickYMin = m_position.y - BRICK_HEIGHT;
+	float brickYMax = m_position.y + BRICK_HEIGHT;
+
+	if (ballXMin < brickXMax && ballXMax > brickXMin &&
+		ballYMin < brickYMax && ballYMax > brickYMin)
+	{
 		return true;
+	}
 
 	return false;
+}
+
+void Brick::Break()
+{
+	m_isAlive = false;
+
+	std::cout << "Brick broken" << std::endl;
 }
 
 #ifdef NETWORKING_SERVER
@@ -49,6 +79,7 @@ void Brick::SendData(int brickID, RakNet::RakPeerInterface * pPeerInterface)
 	bs.Write(brickID);
 	bs.Write((char*)&m_position, sizeof(glm::vec2));
 	bs.Write((char*)&m_colour, sizeof(glm::vec4));
+	bs.Write((char*)&m_isAlive, sizeof(bool));
 
 	std::cout << "Sent brick data" << brickID << std::endl;
 

@@ -234,6 +234,8 @@ void Server::GenerateBricks()
 				break;
 			}
 
+			brick->m_isAlive = true;
+
 			id++;
 		}
 	}

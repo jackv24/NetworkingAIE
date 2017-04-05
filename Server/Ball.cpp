@@ -64,13 +64,30 @@ void Ball::Update(float deltaTime, float leftPaddlePos, float rightPaddlePos, st
 		}
 	}
 
+	//Brick check collision
+	for (auto brick : *bricks)
+	{
+		if (brick.second.CheckCollision(m_position, m_velocity))
+		{
+			m_hasBounced = true;
+
+			//TODO: Bounce ball off of bricks
+
+			brick.second.Break();
+
 #ifdef NETWORKING_SERVER
+			brick.second.SendData(brick.first, pPeerInterface);
+#endif
+		}
+	}
+
 	if (m_hasBounced)
 	{
 		m_hasBounced = false;
+#ifdef NETWORKING_SERVER
 		SendData();
-	}
 #endif
+	}
 }
 
 #ifdef NETWORKING_SERVER
