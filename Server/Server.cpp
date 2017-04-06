@@ -28,8 +28,8 @@ void Server::Startup()
 	playerOne.yPos = 0;
 	playerTwo.yPos = 0;
 
-	ballOne = Ball(1, glm::vec2(-PADDLE_DISTANCE + PADDLE_WIDTH + BALL_RADIUS, 0), glm::vec2(5, 5));
-	ballTwo = Ball(2, glm::vec2(PADDLE_DISTANCE - PADDLE_WIDTH - BALL_RADIUS, 0), glm::vec2(-5, -5));
+	ballOne = Ball(1, glm::vec2(-PADDLE_DISTANCE + PADDLE_WIDTH + BALL_RADIUS, 0), glm::vec2(BALL_BASE_SPEED, BALL_BASE_SPEED));
+	ballTwo = Ball(2, glm::vec2(PADDLE_DISTANCE - PADDLE_WIDTH - BALL_RADIUS, 0), glm::vec2(-BALL_BASE_SPEED, BALL_BASE_SPEED));
 
 	bricks[1].m_position = glm::vec2(2, 4);
 }
@@ -156,7 +156,7 @@ void Server::HandleNetworkMessages(RakNet::RakPeerInterface* pPeerInterface)
 				}
 				else if (clientID == 2)
 				{
-					bsIn.Read(playerOne.moveDir);
+					bsIn.Read(playerTwo.moveDir);
 					bsIn.Read(playerTwo.yPos);
 				}
 

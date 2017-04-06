@@ -9,7 +9,14 @@ public:
 	Brick();
 	~Brick();
 
-	bool CheckCollision(glm::vec2 ballPos, glm::vec2 ballVelocity);
+	enum CollisionDirection
+	{
+		None,
+		Side,
+		Top
+	};
+
+	CollisionDirection CheckCollision(glm::vec2 ballPos, glm::vec2 ballVelocity);
 
 	void Break();
 

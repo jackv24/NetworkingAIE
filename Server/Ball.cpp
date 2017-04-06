@@ -38,10 +38,10 @@ void Ball::Update(float deltaTime, Player &leftPlayer, Player &rightPlayer, std:
 	}
 
 	//Bounce off paddles
-	//Right paddle horizontal check
+	//left paddle horizontal check
 	if (m_position.x - BALL_RADIUS < -PADDLE_DISTANCE + PADDLE_WIDTH &&
 		m_position.x - BALL_RADIUS > -PADDLE_DISTANCE &&
-		m_velocity.x < 0)
+		m_velocity.x < 0 && m_position.x < 0)
 	{
 		//Vertical check
 		if (m_position.y > leftPlayer.yPos - PADDLE_HEIGHT && m_position.y < leftPlayer.yPos + PADDLE_HEIGHT)
@@ -51,11 +51,11 @@ void Ball::Update(float deltaTime, Player &leftPlayer, Player &rightPlayer, std:
 			SetOwner(leftPlayer);
 		}
 	}
-	//Left paddle horizontal check
+	//right paddle horizontal check
 	else if (
 		m_position.x + BALL_RADIUS > PADDLE_DISTANCE - PADDLE_WIDTH &&
 		m_position.x + BALL_RADIUS < PADDLE_DISTANCE &&
-		m_velocity.x > 0)
+		m_velocity.x > 0 && m_position.x > 0)
 	{
 		//Vertical check
 		if (m_position.y > rightPlayer.yPos - PADDLE_HEIGHT && m_position.y < rightPlayer.yPos + PADDLE_HEIGHT)
@@ -69,11 +69,22 @@ void Ball::Update(float deltaTime, Player &leftPlayer, Player &rightPlayer, std:
 	//Brick check collision
 	for (auto &brick : *bricks)
 	{
-		if (brick.second.m_isAlive && brick.second.CheckCollision(m_position, m_velocity))
+		Brick::CollisionDirection dir = brick.second.CheckCollision(m_position, m_velocity);
+
+		if (dir != Brick::CollisionDirection::None)
 		{
 			m_hasBounced = true;
 
 			//TODO: Bounce ball off of bricks
+			switch (dir)
+			{
+			case Brick::CollisionDirection::Side:
+				m_velocity.x *= -1;
+				break;
+			case Brick::CollisionDirection::Top:
+				m_velocity.y *= -1;
+				break;
+			}
 
 			brick.second.Break();
 

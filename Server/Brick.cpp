@@ -13,9 +13,12 @@ Brick::~Brick()
 {
 }
 
-bool Brick::CheckCollision(glm::vec2 ballPos, glm::vec2 ballVelocity)
+Brick::CollisionDirection Brick::CheckCollision(glm::vec2 ballPos, glm::vec2 ballVelocity)
 {
-	/*glm::vec2 pt = ballPos;
+	if (!m_isAlive)
+		return None;
+
+	glm::vec2 pt = ballPos;
 
 	float rectRight = m_position.x + BRICK_WIDTH;
 	float rectLeft = m_position.x - BRICK_WIDTH;
@@ -37,9 +40,11 @@ bool Brick::CheckCollision(glm::vec2 ballPos, glm::vec2 ballVelocity)
 			return Side;
 		else
 			return Top;
-	}*/
+	}
 
-	float ballXMin = ballPos.x - BALL_RADIUS;
+	return None;
+
+	/*float ballXMin = ballPos.x - BALL_RADIUS;
 	float ballXMax = ballPos.x + BALL_RADIUS;
 	float ballYMin = ballPos.y - BALL_RADIUS;
 	float ballYMax = ballPos.y + BALL_RADIUS;
@@ -55,7 +60,7 @@ bool Brick::CheckCollision(glm::vec2 ballPos, glm::vec2 ballVelocity)
 		return true;
 	}
 
-	return false;
+	return false;*/
 }
 
 void Brick::Break()
