@@ -9,13 +9,14 @@ public:
 	Brick();
 	~Brick();
 
-
 	bool CheckCollision(glm::vec2 ballPos, glm::vec2 ballVelocity);
 
 	void Break();
 
 #ifdef NETWORKING_SERVER
 	void SendData(int brickID, RakNet::RakPeerInterface* pPeerInterface);
+
+	int scoreWorth = 0;
 #endif
 
 	glm::vec2 m_position;

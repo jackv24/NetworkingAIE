@@ -21,7 +21,7 @@ Ball::~Ball()
 {
 }
 
-void Ball::Update(float deltaTime, float leftPaddlePos, float rightPaddlePos, std::unordered_map<int, Brick>* bricks)
+void Ball::Update(float deltaTime, Player &leftPlayer, Player &rightPlayer, std::unordered_map<int, Brick>* bricks)
 {
 	m_position += m_velocity * deltaTime;
 
@@ -44,10 +44,11 @@ void Ball::Update(float deltaTime, float leftPaddlePos, float rightPaddlePos, st
 		m_velocity.x < 0)
 	{
 		//Vertical check
-		if (m_position.y > leftPaddlePos - PADDLE_HEIGHT && m_position.y < leftPaddlePos + PADDLE_HEIGHT)
+		if (m_position.y > leftPlayer.yPos - PADDLE_HEIGHT && m_position.y < leftPlayer.yPos + PADDLE_HEIGHT)
 		{
 			m_velocity.x *= -1;
 			m_hasBounced = true;
+			SetOwner(leftPlayer);
 		}
 	}
 	//Left paddle horizontal check
@@ -57,17 +58,18 @@ void Ball::Update(float deltaTime, float leftPaddlePos, float rightPaddlePos, st
 		m_velocity.x > 0)
 	{
 		//Vertical check
-		if (m_position.y > rightPaddlePos - PADDLE_HEIGHT && m_position.y < rightPaddlePos + PADDLE_HEIGHT)
+		if (m_position.y > rightPlayer.yPos - PADDLE_HEIGHT && m_position.y < rightPlayer.yPos + PADDLE_HEIGHT)
 		{
 			m_velocity.x *= -1;
 			m_hasBounced = true;
+			SetOwner(rightPlayer);
 		}
 	}
 
 	//Brick check collision
-	for (auto brick : *bricks)
+	for (auto &brick : *bricks)
 	{
-		if (brick.second.CheckCollision(m_position, m_velocity))
+		if (brick.second.m_isAlive && brick.second.CheckCollision(m_position, m_velocity))
 		{
 			m_hasBounced = true;
 
@@ -76,6 +78,8 @@ void Ball::Update(float deltaTime, float leftPaddlePos, float rightPaddlePos, st
 			brick.second.Break();
 
 #ifdef NETWORKING_SERVER
+			AddScore(brick.second.scoreWorth);
+
 			brick.second.SendData(brick.first, pPeerInterface);
 #endif
 		}
@@ -90,6 +94,22 @@ void Ball::Update(float deltaTime, float leftPaddlePos, float rightPaddlePos, st
 	}
 }
 
+void Ball::SetOwner(Player &owner)
+{
+	m_ownerID = owner.m_id;
+	m_colour = m_ownerID == 1 ? glm::vec4(0.26f, 0.55f, 0.8f, 1) : glm::vec4(0.78f, 0.23f, 0.25f, 1);
+
+#ifdef NETWORKING_SERVER
+	AddScore(BALL_BOUNCE_SCORE);
+#endif
+}
+
+void Ball::SetOwner(int id)
+{
+	m_ownerID = id;
+	m_colour = m_ownerID == 1 ? glm::vec4(0.26f, 0.55f, 0.8f, 1) : glm::vec4(0.78f, 0.23f, 0.25f, 1);
+}
+
 #ifdef NETWORKING_SERVER
 void Ball::SendData()
 {
@@ -101,10 +121,22 @@ void Ball::SendData()
 	bs.Write(m_id);
 	bs.Write((char*)&m_position, sizeof(glm::vec2));
 	bs.Write((char*)&m_velocity, sizeof(glm::vec2));
+	bs.Write((char*)&m_colour, sizeof(glm::vec4));
 
 	std::cout << "Sent ball data" << m_id << std::endl;
 
 	//Broadcast packet (should be picked up by the server)
+	pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_SYSTEM_ADDRESS, true);
+}
+
+void Ball::AddScore(int amount)
+{
+	RakNet::BitStream bs;
+	bs.Write((RakNet::MessageID)GameMessages::ID_SERVER_SCORE_DATA);
+
+	bs.Write(m_ownerID);
+	bs.Write(amount);
+
 	pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_SYSTEM_ADDRESS, true);
 }
 #endif

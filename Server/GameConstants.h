@@ -15,3 +15,9 @@ const float BALL_RADIUS = 1.0f;
 const float BRICK_WIDTH = 1.0f;
 const float BRICK_HEIGHT = 2.0f;
 const float BRICK_PADDING = 0.5f;
+
+const int BALL_BOUNCE_SCORE = 2;
+const int BRICK_BREAK_SCORE_0 = 10;
+const int BRICK_BREAK_SCORE_1 = 20;
+const int BRICK_BREAK_SCORE_2 = 50;
+const int BRICK_BREAK_SCORE_3 = 100;

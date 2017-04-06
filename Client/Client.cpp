@@ -1,8 +1,10 @@
 #include <iostream>
+#include <string>
 
 #include <BitStream.h>
 #include "Gizmos.h"
 #include "Input.h"
+#include <imgui.h>
 
 #include "Client.h"
 #include <GameMessages.h>
@@ -23,7 +25,6 @@ Client::~Client()
 
 bool Client::startup()
 {
-	
 	setBackgroundColour(0.25f, 0.25f, 0.25f);
 
 	// initialise gizmo primitive counts
@@ -35,6 +36,9 @@ bool Client::startup()
 
 	m_myPlayer.yPos = 0;
 	m_otherPlayer.yPos = 0;
+
+	ballOne = Ball(1, glm::vec2(-PADDLE_DISTANCE + PADDLE_WIDTH + BALL_RADIUS, 0), glm::vec2(0));
+	ballTwo = Ball(2, glm::vec2(PADDLE_DISTANCE - PADDLE_WIDTH - BALL_RADIUS, 0), glm::vec2(0));
 
 	//Connect to server
 	HandleNetworkConnection();
@@ -99,12 +103,12 @@ void Client::update(float deltaTime)
 
 	//Update balls
 	ballOne.Update(deltaTime,
-		m_clientID == 1 ? m_myPlayer.yPos : m_otherPlayer.yPos,
-		m_clientID == 1 ? m_otherPlayer.yPos : m_myPlayer.yPos,
+		m_clientID == 1 ? m_myPlayer : m_otherPlayer,
+		m_clientID == 1 ? m_otherPlayer : m_myPlayer,
 		&m_bricks);
 	ballTwo.Update(deltaTime,
-		m_clientID == 1 ? m_myPlayer.yPos : m_otherPlayer.yPos,
-		m_clientID == 1 ? m_otherPlayer.yPos : m_myPlayer.yPos,
+		m_clientID == 1 ? m_myPlayer : m_otherPlayer,
+		m_clientID == 1 ? m_otherPlayer : m_myPlayer,
 		&m_bricks);
 
 	//Draw stage
@@ -141,8 +145,8 @@ void Client::update(float deltaTime)
 		colour2);
 
 	//Draw balls
-	Gizmos::addSphere(glm::vec3(ballOne.m_position, 0), BALL_RADIUS, 4, 4, glm::vec4(1));
-	Gizmos::addSphere(glm::vec3(ballTwo.m_position, 0), BALL_RADIUS, 4, 4, glm::vec4(1));
+	Gizmos::addSphere(glm::vec3(ballOne.m_position, 0), BALL_RADIUS, 8, 4, ballOne.m_colour);
+	Gizmos::addSphere(glm::vec3(ballTwo.m_position, 0), BALL_RADIUS, 8, 4, ballTwo.m_colour);
 
 	//Draw bricks
 	for (auto brick : m_bricks)
@@ -155,6 +159,18 @@ void Client::update(float deltaTime)
 				brick.second.m_colour);
 		}
 	}
+
+	//UI
+	Player* p1 = m_clientID == 1 ? &m_myPlayer : &m_otherPlayer;
+	Player* p2 = m_clientID == 1 ? &m_otherPlayer : &m_myPlayer;
+
+	ImGui::Begin("Player 1");
+	ImGui::Text((std::string("Score: ") + std::to_string(p1->score)).c_str());
+	ImGui::End();
+
+	ImGui::Begin("Player 2");
+	ImGui::Text((std::string("Score: ") + std::to_string(p2->score)).c_str());
+	ImGui::End();
 }
 
 void Client::draw()
@@ -247,6 +263,23 @@ void Client::HandleNetworkMessages()
 		case ID_SERVER_BRICK_DATA:
 			OnReceivedBrickDataPacket(packet);
 			break;
+		case ID_SERVER_SCORE_DATA:
+		{
+			RakNet::BitStream bsIn(packet->data, packet->length, false);
+			//Message was identified, so remove message ID from packet
+			bsIn.IgnoreBytes(sizeof(RakNet::MessageID));
+
+			int ownerID;
+			int amount;
+
+			bsIn.Read(ownerID);
+			bsIn.Read(amount);
+
+			Player* p = ownerID == m_clientID ? &m_myPlayer : &m_otherPlayer;
+			p->score += amount;
+
+			break;
+		}
 		default:
 			std::cout << "Received a message with an unknown ID: " << packet->data[0];
 			break;
@@ -301,11 +334,13 @@ void Client::OnReceivedBallDataPacket(RakNet::Packet* packet)
 	{
 		bsIn.Read((char*)&ballOne.m_position, sizeof(glm::vec2));
 		bsIn.Read((char*)&ballOne.m_velocity, sizeof(glm::vec2));
+		bsIn.Read((char*)&ballOne.m_colour, sizeof(glm::vec4));
 	}
 	else if (id == 2)
 	{
 		bsIn.Read((char*)&ballTwo.m_position, sizeof(glm::vec2));
 		bsIn.Read((char*)&ballTwo.m_velocity, sizeof(glm::vec2));
+		bsIn.Read((char*)&ballTwo.m_colour, sizeof(glm::vec4));
 	}
 	else
 		std::cout << "Invalid Ball ID: " << id << std::endl;

@@ -28,8 +28,8 @@ void Server::Startup()
 	playerOne.yPos = 0;
 	playerTwo.yPos = 0;
 
-	ballOne = Ball(1, glm::vec2(-PADDLE_DISTANCE + PADDLE_WIDTH, 0), glm::vec2(5, 5));
-	ballTwo = Ball(2, glm::vec2(PADDLE_DISTANCE - PADDLE_WIDTH, 0), glm::vec2(-5, -5));
+	ballOne = Ball(1, glm::vec2(-PADDLE_DISTANCE + PADDLE_WIDTH + BALL_RADIUS, 0), glm::vec2(5, 5));
+	ballTwo = Ball(2, glm::vec2(PADDLE_DISTANCE - PADDLE_WIDTH - BALL_RADIUS, 0), glm::vec2(-5, -5));
 
 	bricks[1].m_position = glm::vec2(2, 4);
 }
@@ -59,6 +59,9 @@ void Server::Run()
 	//Balls "have bounced" to start, so they send initial data
 	ballOne.m_hasBounced = true;
 	ballTwo.m_hasBounced = true;
+
+	ballOne.SetOwner(1);
+	ballTwo.SetOwner(2);
 
 	GenerateBricks();
 
@@ -168,6 +171,23 @@ void Server::HandleNetworkMessages(RakNet::RakPeerInterface* pPeerInterface)
 			}
 			break;
 		}
+		case ID_SERVER_SCORE_DATA:
+		{
+			RakNet::BitStream bsIn(packet->data, packet->length, false);
+			//Message was identified, so remove message ID from packet
+			bsIn.IgnoreBytes(sizeof(RakNet::MessageID));
+
+			int ownerID;
+			int amount;
+
+			bsIn.Read(ownerID);
+			bsIn.Read(amount);
+
+			Player* p = ownerID == 1 ? &playerOne : &playerTwo;
+			p->score += amount;
+
+			break;
+		}
 		default:
 			std::cout << "Received a message with an unknown ID: " << packet->data[0];
 			break;
@@ -222,15 +242,19 @@ void Server::GenerateBricks()
 			{
 			case 0:
 				brick->m_colour = glm::vec4(0.77f, 0.99f, 0.61f, 1);
+				brick->scoreWorth = BRICK_BREAK_SCORE_0;
 				break;
 			case 1:
 				brick->m_colour = glm::vec4(0.43f, 0.92f, 0.97f, 1);
+				brick->scoreWorth = BRICK_BREAK_SCORE_1;
 				break;
 			case 2:
 				brick->m_colour = glm::vec4(0.97f, 0.56f, 0.34f, 1);
+				brick->scoreWorth = BRICK_BREAK_SCORE_2;
 				break;
 			case 3:
 				brick->m_colour = glm::vec4(0.38f, 0.36f, 0.66f, 1);
+				brick->scoreWorth = BRICK_BREAK_SCORE_3;
 				break;
 			}
 
@@ -258,8 +282,8 @@ void Server::SimulateGame(Server* s, RakNet::RakPeerInterface* pPeerInterface)
 			s->playerTwo.Move(deltaTime);
 
 			//Update balls on server, send data when they bounce
-			s->ballOne.Update(deltaTime, s->playerOne.yPos, s->playerTwo.yPos, &s->bricks);
-			s->ballTwo.Update(deltaTime, s->playerOne.yPos, s->playerTwo.yPos, &s->bricks);
+			s->ballOne.Update(deltaTime, s->playerOne, s->playerTwo, &s->bricks);
+			s->ballTwo.Update(deltaTime, s->playerOne, s->playerTwo, &s->bricks);
 		}
 
 		std::this_thread::sleep_for(std::chrono::milliseconds((int)(SERVER_UPDATE_INTERVAL * 1000)));

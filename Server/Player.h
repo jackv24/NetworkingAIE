@@ -12,9 +12,11 @@ public:
 
 	void SendData(int clientID, RakNet::RakPeerInterface* pPeerInterface);
 
+	int m_id;
+
 	int moveDir = 0;
 	float yPos;
 
-	int score;
+	int score = 0;
 };
 

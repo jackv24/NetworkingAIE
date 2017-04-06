@@ -32,6 +32,8 @@ void Player::SendData(int clientID, RakNet::RakPeerInterface* pPeerInterface)
 	RakNet::BitStream bs;
 	bs.Write((RakNet::MessageID)GameMessages::ID_CLIENT_PLAYER_DATA);
 
+	m_id = clientID;
+
 	//Write client ID and data to stream
 	bs.Write(clientID);
 	bs.Write(moveDir);

@@ -15,9 +15,6 @@ Brick::~Brick()
 
 bool Brick::CheckCollision(glm::vec2 ballPos, glm::vec2 ballVelocity)
 {
-	if (!m_isAlive)
-		return false;
-
 	/*glm::vec2 pt = ballPos;
 
 	float rectRight = m_position.x + BRICK_WIDTH;
