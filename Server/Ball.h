@@ -21,6 +21,7 @@ public:
 #ifdef NETWORKING_SERVER
 	void SendData();
 	void AddScore(int amount);
+	void Respawn();
 
 	RakNet::RakPeerInterface* pPeerInterface;
 #endif

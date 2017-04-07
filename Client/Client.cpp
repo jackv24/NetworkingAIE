@@ -40,6 +40,18 @@ bool Client::startup()
 	ballOne = Ball(1, glm::vec2(-PADDLE_DISTANCE + PADDLE_WIDTH + BALL_RADIUS, 0), glm::vec2(0));
 	ballTwo = Ball(2, glm::vec2(PADDLE_DISTANCE - PADDLE_WIDTH - BALL_RADIUS, 0), glm::vec2(0));
 
+	ImGuiStyle* style = &ImGui::GetStyle();
+
+	style->Colors[ImGuiCol_WindowBg] = ImVec4(0, 0, 0, 0);
+	style->Colors[ImGuiCol_TitleBg] = ImVec4(0, 0, 0, 0);
+	style->Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0, 0, 0, 0);
+	style->Colors[ImGuiCol_TitleBgActive] = ImVec4(0, 0, 0, 0);
+	style->Colors[ImGuiCol_ResizeGrip] = ImVec4(0, 0, 0, 0);
+
+	ImGuiIO* io = &ImGui::GetIO();
+
+	io->Fonts->AddFontFromFileTTF("font/consolas.ttf", 22.0f, NULL, io->Fonts->GetGlyphRangesDefault());
+
 	//Connect to server
 	HandleNetworkConnection();
 

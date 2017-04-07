@@ -36,6 +36,16 @@ void Ball::Update(float deltaTime, Player &leftPlayer, Player &rightPlayer, std:
 		m_velocity.y *= -1;
 		m_hasBounced = true;
 	}
+	
+	//Reset ball position if it goes off screen
+	if (m_position.x - BALL_RADIUS > GAME_WIDTH + BALL_RETURN_PADDING || m_position.x + BALL_RADIUS < -GAME_WIDTH - BALL_RETURN_PADDING)
+	{
+		int swap = m_ownerID == 1 ? -1 : 1;
+
+		m_position = glm::vec2((PADDLE_DISTANCE - PADDLE_WIDTH - BALL_RADIUS) * swap, m_ownerID == 1 ? leftPlayer.yPos : rightPlayer.yPos);
+
+		m_hasBounced = true;
+	}
 
 	//Bounce off paddles
 	//left paddle horizontal check
@@ -149,5 +159,9 @@ void Ball::AddScore(int amount)
 	bs.Write(amount);
 
 	pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_SYSTEM_ADDRESS, true);
+}
+
+void Ball::Respawn()
+{
 }
 #endif
