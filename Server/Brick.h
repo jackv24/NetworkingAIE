@@ -16,7 +16,7 @@ public:
 		Top
 	};
 
-	CollisionDirection CheckCollision(glm::vec2 ballPos, glm::vec2 ballVelocity);
+	CollisionDirection CheckCollision(glm::vec2 ballPos);
 
 	void Break();
 

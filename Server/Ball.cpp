@@ -79,7 +79,7 @@ void Ball::Update(float deltaTime, Player &leftPlayer, Player &rightPlayer, std:
 	//Brick check collision
 	for (auto &brick : *bricks)
 	{
-		Brick::CollisionDirection dir = brick.second.CheckCollision(m_position, m_velocity);
+		Brick::CollisionDirection dir = brick.second.CheckCollision(m_position);
 
 		if (dir != Brick::CollisionDirection::None)
 		{

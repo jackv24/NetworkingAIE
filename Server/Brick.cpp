@@ -13,12 +13,48 @@ Brick::~Brick()
 {
 }
 
-Brick::CollisionDirection Brick::CheckCollision(glm::vec2 ballPos, glm::vec2 ballVelocity)
+Brick::CollisionDirection Brick::CheckCollision(glm::vec2 ballPos)
 {
 	if (!m_isAlive)
 		return None;
 
-	glm::vec2 pt = ballPos;
+	//If Collision detected
+	if (ballPos.x - BALL_RADIUS < m_position.x + BRICK_WIDTH &&
+		ballPos.x + BALL_RADIUS > m_position.x - BRICK_WIDTH &&
+		ballPos.y - BALL_RADIUS < m_position.y + BRICK_HEIGHT &&
+		ballPos.y + BALL_RADIUS > m_position.y - BRICK_HEIGHT)
+	{
+		//Determine direction
+		//Get distance to each side
+		float distanceRight = abs((ballPos.x - BALL_RADIUS) - (m_position.x + BRICK_WIDTH));
+		float distanceLeft = abs((ballPos.x + BALL_RADIUS) - (m_position.x - BRICK_WIDTH));
+		float distanceUp = abs((ballPos.y - BALL_RADIUS) - (m_position.y + BRICK_HEIGHT));
+		float distanceDown = abs((ballPos.y + BALL_RADIUS) - (m_position.y - BRICK_HEIGHT));
+
+		float distX = 0;
+		float distY = 0;
+
+		//Determine which distance to use for top and side (the smallest)
+		if (ballPos.x > m_position.x)
+			distX = distanceRight;
+		else
+			distX = distanceLeft;
+
+		if (ballPos.y > m_position.y)
+			distY = distanceUp;
+		else
+			distY = distanceDown;
+
+		//Which out of top and side distances is smallest?
+		if (distX < distY)
+			return Side;
+		else
+			return Top;
+	}
+
+	return None;
+
+	/*glm::vec2 pt = ballPos;
 
 	float rectRight = m_position.x + BRICK_WIDTH;
 	float rectLeft = m_position.x - BRICK_WIDTH;
@@ -42,25 +78,7 @@ Brick::CollisionDirection Brick::CheckCollision(glm::vec2 ballPos, glm::vec2 bal
 			return Top;
 	}
 
-	return None;
-
-	/*float ballXMin = ballPos.x - BALL_RADIUS;
-	float ballXMax = ballPos.x + BALL_RADIUS;
-	float ballYMin = ballPos.y - BALL_RADIUS;
-	float ballYMax = ballPos.y + BALL_RADIUS;
-
-	float brickXMin = m_position.x - BRICK_WIDTH;
-	float brickXMax = m_position.x + BRICK_WIDTH;
-	float brickYMin = m_position.y - BRICK_HEIGHT;
-	float brickYMax = m_position.y + BRICK_HEIGHT;
-
-	if (ballXMin < brickXMax && ballXMax > brickXMin &&
-		ballYMin < brickYMax && ballYMax > brickYMin)
-	{
-		return true;
-	}
-
-	return false;*/
+	return None;*/
 }
 
 void Brick::Break()
