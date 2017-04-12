@@ -45,6 +45,10 @@ void Ball::Update(float deltaTime, Player &leftPlayer, Player &rightPlayer, std:
 		m_position = glm::vec2((PADDLE_DISTANCE - PADDLE_WIDTH - BALL_RADIUS) * swap, m_ownerID == 1 ? leftPlayer.yPos : rightPlayer.yPos);
 
 		m_hasBounced = true;
+
+#ifdef NETWORKING_SERVER
+		AddScore(BALL_LOSE_SCORE);
+#endif
 	}
 
 	//Bounce off paddles
