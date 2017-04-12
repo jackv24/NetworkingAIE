@@ -35,5 +35,7 @@ public:
 	Ball ballTwo;
 
 	std::unordered_map<int, Brick> bricks;
+
+	bool gameRunning = true;
 };
 

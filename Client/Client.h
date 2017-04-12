@@ -53,4 +53,6 @@ protected:
 	Ball ballTwo;
 
 	std::unordered_map<int, Brick> m_bricks;
+
+	bool m_gameRunning = true;
 };

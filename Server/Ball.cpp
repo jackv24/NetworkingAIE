@@ -47,7 +47,7 @@ void Ball::Update(float deltaTime, Player &leftPlayer, Player &rightPlayer, std:
 		m_hasBounced = true;
 
 #ifdef NETWORKING_SERVER
-		AddScore(BALL_LOSE_SCORE);
+		AddScore(BALL_LOSE_SCORE, m_position.x < 0 ? 1 : 2);
 #endif
 	}
 
@@ -150,7 +150,6 @@ void Ball::SendData()
 
 	std::cout << "Sent ball data" << m_id << std::endl;
 
-	//Broadcast packet (should be picked up by the server)
 	pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_SYSTEM_ADDRESS, true);
 }
 
@@ -162,6 +161,18 @@ void Ball::AddScore(int amount)
 	bs.Write(m_ownerID);
 	bs.Write(amount);
 
+	//Broadcast packet
+	pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_SYSTEM_ADDRESS, true);
+}
+void Ball::AddScore(int amount, int clientID)
+{
+	RakNet::BitStream bs;
+	bs.Write((RakNet::MessageID)GameMessages::ID_SERVER_SCORE_DATA);
+
+	bs.Write(clientID);
+	bs.Write(amount);
+
+	//Broadcast packet
 	pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_SYSTEM_ADDRESS, true);
 }
 

@@ -171,23 +171,6 @@ void Server::HandleNetworkMessages(RakNet::RakPeerInterface* pPeerInterface)
 			}
 			break;
 		}
-		case ID_SERVER_SCORE_DATA:
-		{
-			RakNet::BitStream bsIn(packet->data, packet->length, false);
-			//Message was identified, so remove message ID from packet
-			bsIn.IgnoreBytes(sizeof(RakNet::MessageID));
-
-			int ownerID;
-			int amount;
-
-			bsIn.Read(ownerID);
-			bsIn.Read(amount);
-
-			Player* p = ownerID == 1 ? &playerOne : &playerTwo;
-			p->score += amount;
-
-			break;
-		}
 		default:
 			std::cout << "Received a message with an unknown ID: " << packet->data[0];
 			break;
@@ -199,31 +182,17 @@ void Server::GenerateBricks()
 {
 	int level[11][11] = {
 		{ 0, 0, 1, 0, 0, 2, 0, 0, 1, 0, 0 },
-		{ 0, 0, 1, 0, 0, 2, 0, 0, 1, 0, 0 },
-		{ 0, 1, 1, 3, 0, 2, 0, 3, 1, 1, 0 },
+		{ 0, 0, 3, 3, 3, 2, 3, 3, 3, 0, 0 },
+		{ 0, 1, 3, 3, 3, 2, 3, 3, 3, 1, 0 },
 		{ 0, 1, 1, 0, 2, 3, 2, 0, 1, 1, 0 },
-		{ 0, 1, 1, 2, 3, 3, 3, 2, 1, 1, 0 },
-		{ 0, 1, 1, 2, 3, 3, 3, 2, 1, 1, 0 },
-		{ 0, 1, 1, 2, 3, 3, 3, 2, 1, 1, 0 },
+		{ 0, 1, 1, 2, 3, 2, 3, 2, 1, 1, 0 },
+		{ 0, 1, 1, 2, 2, 2, 2, 2, 1, 1, 0 },
+		{ 0, 1, 1, 2, 2, 2, 2, 2, 1, 1, 0 },
 		{ 0, 1, 1, 0, 2, 3, 2, 0, 1, 1, 0 },
-		{ 0, 1, 1, 3, 0, 2, 0, 3, 1, 1, 0 },
-		{ 0, 0, 1, 0, 0, 2, 0, 0, 1, 0, 0 },
+		{ 0, 1, 3, 3, 3, 2, 3, 3, 3, 1, 0 },
+		{ 0, 0, 3, 3, 3, 2, 3, 3, 3, 0, 0 },
 		{ 0, 0, 1, 0, 0, 2, 0, 0, 1, 0, 0 },
 	};
-
-	/*int level[11][11] = {
-	{ 0, 0, 0, 0, 3, 0, 3, 0, 0, 0, 0 },
-	{ 0, 0, 0, 3, 0, 3, 0, 3, 0, 0, 0 },
-	{ 0, 0, 0, 3, 0, 1, 0, 3, 0, 0, 0 },
-	{ 0, 0, 0, 3, 1, 0, 1, 3, 0, 0, 0 },
-	{ 0, 0, 0, 3, 1, 0, 1, 3, 0, 0, 0 },
-	{ 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0 },
-	{ 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0 },
-	{ 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0 },
-	{ 0, 0, 2, 2, 1, 0, 1, 2, 2, 0, 0 },
-	{ 0, 0, 2, 0, 1, 0, 1, 0, 2, 0, 0 },
-	{ 0, 0, 2, 0, 1, 0, 1, 0, 2, 0, 0 },
-	};*/
 
 	int id = 1;
 
@@ -276,7 +245,7 @@ void Server::SimulateGame(Server* s, RakNet::RakPeerInterface* pPeerInterface)
 		auto start = timer.now();
 
 		//Update balls
-		if (s->playerOneConnected && s->playerTwoConnected)
+		if (s->playerOneConnected && s->playerTwoConnected && s->gameRunning)
 		{
 			s->playerOne.Move(deltaTime);
 			s->playerTwo.Move(deltaTime);
@@ -284,6 +253,24 @@ void Server::SimulateGame(Server* s, RakNet::RakPeerInterface* pPeerInterface)
 			//Update balls on server, send data when they bounce
 			s->ballOne.Update(deltaTime, s->playerOne, s->playerTwo, &s->bricks);
 			s->ballTwo.Update(deltaTime, s->playerOne, s->playerTwo, &s->bricks);
+
+			bool allBricksBroken = true;
+
+			for (auto &brick : s->bricks)
+			{
+				if (brick.second.m_isAlive)
+					allBricksBroken = false;
+			}
+
+			if (allBricksBroken)
+			{
+				s->gameRunning = false;
+
+				RakNet::BitStream bs;
+				bs.Write((RakNet::MessageID)GameMessages::ID_SERVER_WIN_DATA);
+
+				pPeerInterface->Send(&bs, HIGH_PRIORITY, RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_SYSTEM_ADDRESS, true);
+			}
 		}
 
 		std::this_thread::sleep_for(std::chrono::milliseconds((int)(SERVER_UPDATE_INTERVAL * 1000)));

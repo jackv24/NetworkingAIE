@@ -114,14 +114,17 @@ void Client::update(float deltaTime)
 	HandleNetworkMessages();
 
 	//Update balls
-	ballOne.Update(deltaTime,
-		m_clientID == 1 ? m_myPlayer : m_otherPlayer,
-		m_clientID == 1 ? m_otherPlayer : m_myPlayer,
-		&m_bricks);
-	ballTwo.Update(deltaTime,
-		m_clientID == 1 ? m_myPlayer : m_otherPlayer,
-		m_clientID == 1 ? m_otherPlayer : m_myPlayer,
-		&m_bricks);
+	if (m_gameRunning)
+	{
+		ballOne.Update(deltaTime,
+			m_clientID == 1 ? m_myPlayer : m_otherPlayer,
+			m_clientID == 1 ? m_otherPlayer : m_myPlayer,
+			&m_bricks);
+		ballTwo.Update(deltaTime,
+			m_clientID == 1 ? m_myPlayer : m_otherPlayer,
+			m_clientID == 1 ? m_otherPlayer : m_myPlayer,
+			&m_bricks);
+	}
 
 	//Draw stage
 	Gizmos::addAABB(
@@ -183,6 +186,36 @@ void Client::update(float deltaTime)
 	ImGui::Begin("Player 2");
 	ImGui::Text((std::string("Score: ") + std::to_string(p2->score)).c_str());
 	ImGui::End();
+
+	if (!m_gameRunning)
+	{
+		Player* p1;
+		Player* p2;
+
+		if (m_clientID == 1)
+		{
+			p1 = &m_myPlayer;
+			p2 = &m_otherPlayer;
+		}
+		else
+		{
+			p1 = &m_otherPlayer;
+			p2 = &m_myPlayer;
+		}
+
+		int playerWinID = 0;
+
+		if (p1->score > p2->score)
+			playerWinID = 1;
+		else if (p2->score > p1->score)
+			playerWinID = 2;
+
+		ImGui::Begin("Game Over");
+		ImGui::Text(playerWinID == 0 ? "Draw!" :
+			(std::string("Player ") + std::to_string(playerWinID) + std::string(" Wins!")
+				).c_str());
+		ImGui::End();
+	}
 }
 
 void Client::draw()
@@ -289,6 +322,16 @@ void Client::HandleNetworkMessages()
 
 			Player* p = ownerID == m_clientID ? &m_myPlayer : &m_otherPlayer;
 			p->score += amount;
+
+			break;
+		}
+		case ID_SERVER_WIN_DATA:
+		{
+			RakNet::BitStream bsIn(packet->data, packet->length, false);
+			//Message was identified, so remove message ID from packet
+			bsIn.IgnoreBytes(sizeof(RakNet::MessageID));
+
+			m_gameRunning = false;
 
 			break;
 		}
