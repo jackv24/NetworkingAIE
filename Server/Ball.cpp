@@ -21,6 +21,11 @@ Ball::~Ball()
 {
 }
 
+float Lerp(float a, float b, float f)
+{
+	return (a * (1.0 - f)) + (b * f);
+}
+
 void Ball::Update(float deltaTime, Player &leftPlayer, Player &rightPlayer, std::unordered_map<int, Brick>* bricks)
 {
 	m_position += m_velocity * deltaTime;
@@ -63,6 +68,13 @@ void Ball::Update(float deltaTime, Player &leftPlayer, Player &rightPlayer, std:
 			m_velocity.x *= -1;
 			m_hasBounced = true;
 			SetOwner(leftPlayer);
+
+			//Change velocity depending on how far along the paddle it bounced
+			float dist = abs(m_position.y - leftPlayer.yPos);
+			float newYSpeed = Lerp(0.0f, 1.0f, dist / PADDLE_HEIGHT) * BALL_SPEED * (m_position.y > leftPlayer.yPos ? 1 : -1);
+			m_velocity.y = newYSpeed;
+
+			m_velocity = glm::normalize(m_velocity) * BALL_SPEED;
 		}
 	}
 	//right paddle horizontal check
@@ -77,6 +89,13 @@ void Ball::Update(float deltaTime, Player &leftPlayer, Player &rightPlayer, std:
 			m_velocity.x *= -1;
 			m_hasBounced = true;
 			SetOwner(rightPlayer);
+
+			//Change velocity depending on how far along the paddle it bounced
+			float dist = abs(m_position.y - rightPlayer.yPos);
+			float newYSpeed = Lerp(0.0f, 1.0f, dist / PADDLE_HEIGHT) * BALL_SPEED * (m_position.y > rightPlayer.yPos ? 1 : -1);
+			m_velocity.y = newYSpeed;
+
+			m_velocity = glm::normalize(m_velocity) * BALL_SPEED;
 		}
 	}
 
