@@ -38,6 +38,7 @@ void Player::SendData(int clientID, RakNet::RakPeerInterface* pPeerInterface)
 	bs.Write(clientID);
 	bs.Write(moveDir);
 	bs.Write(yPos);
+	bs.Write(m_isReady);
 
 	std::cout << "Sent Player data" << clientID << std::endl;
 

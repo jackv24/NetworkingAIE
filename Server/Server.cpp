@@ -153,11 +153,13 @@ void Server::HandleNetworkMessages(RakNet::RakPeerInterface* pPeerInterface)
 				{
 					bsIn.Read(playerOne.moveDir);
 					bsIn.Read(playerOne.yPos);
+					bsIn.Read(playerOne.m_isReady);
 				}
 				else if (clientID == 2)
 				{
 					bsIn.Read(playerTwo.moveDir);
 					bsIn.Read(playerTwo.yPos);
+					bsIn.Read(playerTwo.m_isReady);
 				}
 
 				//Relay data
@@ -245,7 +247,7 @@ void Server::SimulateGame(Server* s, RakNet::RakPeerInterface* pPeerInterface)
 		auto start = timer.now();
 
 		//Update balls
-		if (s->playerOneConnected && s->playerTwoConnected && s->gameRunning)
+		if (s->playerOne.m_isReady && s->playerTwo.m_isReady && s->gameRunning)
 		{
 			s->playerOne.Move(deltaTime);
 			s->playerTwo.Move(deltaTime);
@@ -256,6 +258,7 @@ void Server::SimulateGame(Server* s, RakNet::RakPeerInterface* pPeerInterface)
 
 			bool allBricksBroken = true;
 
+			//Check to see if any bricks are still alive
 			for (auto &brick : s->bricks)
 			{
 				if (brick.second.m_isAlive)

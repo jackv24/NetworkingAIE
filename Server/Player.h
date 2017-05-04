@@ -18,5 +18,7 @@ public:
 	float yPos;
 
 	int score = 0;
+
+	bool m_isReady = false;
 };
 

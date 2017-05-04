@@ -103,6 +103,12 @@ void Client::update(float deltaTime)
 		buttonUpdate = true;
 		m_myPlayer.moveDir = 0;
 	}
+	
+	if (input->wasKeyPressed(aie::INPUT_KEY_R) && !m_myPlayer.m_isReady)
+	{
+		buttonUpdate = true;
+		m_myPlayer.m_isReady = true;
+	}
 
 	if (buttonUpdate)
 		m_myPlayer.SendData(m_clientID, m_pPeerInterface);
@@ -186,6 +192,12 @@ void Client::update(float deltaTime)
 	ImGui::Begin("Player 2");
 	ImGui::Text((std::string("Score: ") + std::to_string(p2->score)).c_str());
 	ImGui::End();
+
+	if (!m_myPlayer.m_isReady)
+	{
+		ImGui::Begin("Press 'R' when you're ready");
+		ImGui::End();
+	}
 
 	if (!m_gameRunning)
 	{
@@ -370,6 +382,7 @@ void Client::OnReceivedClientDataPacket(RakNet::Packet* packet)
 		{
 			bsIn.Read(m_otherPlayer.moveDir);
 			bsIn.Read(m_otherPlayer.yPos);
+			bsIn.Read(m_otherPlayer.m_isReady);
 
 			std::cout << "Client " << clientID <<
 				" at: " << m_otherPlayer.yPos << std::endl;
