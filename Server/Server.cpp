@@ -28,8 +28,8 @@ void Server::Startup()
 	playerOne.yPos = 0;
 	playerTwo.yPos = 0;
 
-	ballOne = Ball(1, glm::vec2(-PADDLE_DISTANCE + PADDLE_WIDTH + BALL_RADIUS, 0), glm::vec2(BALL_SPEED, BALL_SPEED));
-	ballTwo = Ball(2, glm::vec2(PADDLE_DISTANCE - PADDLE_WIDTH - BALL_RADIUS, 0), glm::vec2(-BALL_SPEED, BALL_SPEED));
+	ballOne = Ball(1, glm::vec2(-PADDLE_DISTANCE + PADDLE_WIDTH + BALL_RADIUS, 0), glm::normalize(glm::vec2(1, 1)) * BALL_SPEED);
+	ballTwo = Ball(2, glm::vec2(PADDLE_DISTANCE - PADDLE_WIDTH - BALL_RADIUS, 0), glm::normalize(glm::vec2(-1, 1)) * BALL_SPEED);
 
 	bricks[1].m_position = glm::vec2(2, 4);
 }
