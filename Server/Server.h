@@ -25,6 +25,8 @@ public:
 	void GenerateBricks();
 	static void SimulateGame(Server* s, RakNet::RakPeerInterface* pPeerInterface);
 
+	RakNet::RakPeerInterface* pPeerInterface = nullptr;
+
 	bool playerOneConnected;
 	bool playerTwoConnected;
 

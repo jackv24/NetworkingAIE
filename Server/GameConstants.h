@@ -12,6 +12,7 @@ const float PADDLE_SPEED = 20.0f;
 
 const float BALL_RADIUS = 1.0f;
 const float BALL_SPEED = 15.0f;
+const float BALL_RETURN_SPEED = 20.0f;
 const float BALL_RETURN_PADDING = 10.0f;
 
 const float BRICK_WIDTH = 1.0f;
@@ -24,3 +25,4 @@ const int BRICK_BREAK_SCORE_0 = 10;
 const int BRICK_BREAK_SCORE_1 = 20;
 const int BRICK_BREAK_SCORE_2 = 50;
 const int BRICK_BREAK_SCORE_3 = 100;
+const int BRICK_BREAK_SCORE_4 = 200;

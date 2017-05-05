@@ -9,6 +9,7 @@
 #include <BitStream.h>
 #include "GameMessages.h"
 #include "GameConstants.h"
+#include "Ball.h"
 
 const float SERVER_UPDATE_INTERVAL = 0.001f;
 
@@ -28,8 +29,8 @@ void Server::Startup()
 	playerOne.yPos = 0;
 	playerTwo.yPos = 0;
 
-	balls[0] = Ball(1, glm::vec2(-PADDLE_DISTANCE + PADDLE_WIDTH + BALL_RADIUS, 0), glm::normalize(glm::vec2(1, 1)) * BALL_SPEED);
-	balls[1] = Ball(2, glm::vec2(PADDLE_DISTANCE - PADDLE_WIDTH - BALL_RADIUS, 0), glm::normalize(glm::vec2(-1, 1)) * BALL_SPEED);
+	balls[0] = Ball(0, glm::vec2(-PADDLE_DISTANCE + PADDLE_WIDTH + BALL_RADIUS, 0), glm::normalize(glm::vec2(1, 1)) * BALL_SPEED);
+	balls[1] = Ball(1, glm::vec2(PADDLE_DISTANCE - PADDLE_WIDTH - BALL_RADIUS, 0), glm::normalize(glm::vec2(-1, 1)) * BALL_SPEED);
 
 	bricks[1].m_position = glm::vec2(2, 4);
 }
@@ -37,7 +38,6 @@ void Server::Startup()
 void Server::Run()
 {
 	const unsigned short PORT = 5456;
-	RakNet::RakPeerInterface* pPeerInterface = nullptr;
 
 	//Startup server and start it listening for clients
 	std::cout << "Starting up the server..." << std::endl;
@@ -186,9 +186,9 @@ void Server::GenerateBricks()
 		{ 0, 0, 3, 3, 3, 2, 3, 3, 3, 0, 0 },
 		{ 0, 1, 3, 3, 3, 2, 3, 3, 3, 1, 0 },
 		{ 0, 1, 1, 0, 2, 3, 2, 0, 1, 1, 0 },
-		{ 0, 1, 1, 2, 3, 2, 3, 2, 1, 1, 0 },
-		{ 0, 1, 1, 2, 2, 2, 2, 2, 1, 1, 0 },
-		{ 0, 1, 1, 2, 2, 2, 2, 2, 1, 1, 0 },
+		{ 0, 1, 1, 2, 3, 4, 3, 2, 1, 1, 0 },
+		{ 0, 4, 1, 2, 4, 4, 4, 2, 1, 4, 0 },
+		{ 0, 1, 1, 2, 3, 4, 3, 2, 1, 1, 0 },
 		{ 0, 1, 1, 0, 2, 3, 2, 0, 1, 1, 0 },
 		{ 0, 1, 3, 3, 3, 2, 3, 3, 3, 1, 0 },
 		{ 0, 0, 3, 3, 3, 2, 3, 3, 3, 0, 0 },
@@ -208,6 +208,8 @@ void Server::GenerateBricks()
 
 			brick->m_position = glm::vec2(i * offsetX - (offsetX * 10) / 2, -j * offsetY + (offsetY * 10) / 2);
 
+			brick->server = this;
+
 			switch (level[j][i])
 			{
 			case 0:
@@ -225,6 +227,28 @@ void Server::GenerateBricks()
 			case 3:
 				brick->m_colour = glm::vec4(0.38f, 0.36f, 0.66f, 1);
 				brick->scoreWorth = BRICK_BREAK_SCORE_3;
+				break;
+			case 4: //Ball spawn powerup
+				brick->m_colour = glm::vec4(1.0f, 1.0f, 1.0f, 1);
+				brick->scoreWorth = BRICK_BREAK_SCORE_4;
+				brick->UsePowerup = [](const Brick &brick, Server* server)
+				{
+					int id = 1;
+
+					for (auto &ball : server->balls)
+					{
+						if (ball.first >= id)
+							id = ball.first + 1;
+					}
+
+					server->balls[id] = Ball(id,
+						brick.newBallPosition, brick.newBallVelocity);
+
+					server->balls[id].pPeerInterface = server->pPeerInterface;
+					server->balls[id].m_hasBounced = true;
+					server->balls[id].m_colour = glm::vec4(1.0f);
+					server->balls[id].m_ownerID = 0;
+				};
 				break;
 			}
 

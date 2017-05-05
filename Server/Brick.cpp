@@ -3,7 +3,7 @@
 
 #include "GameMessages.h"
 #include "GameConstants.h"
-#include "Brick.h"
+#include "Server.h"
 
 Brick::Brick()
 {
@@ -13,7 +13,7 @@ Brick::~Brick()
 {
 }
 
-Brick::CollisionDirection Brick::CheckCollision(glm::vec2 ballPos)
+Brick::CollisionDirection Brick::CheckCollision(glm::vec2 ballPos, int ballOwner)
 {
 	if (!m_isAlive)
 		return None;
@@ -45,6 +45,15 @@ Brick::CollisionDirection Brick::CheckCollision(glm::vec2 ballPos)
 		else
 			distY = distanceDown;
 
+#ifdef NETWORKING_SERVER
+		newBallPosition = ballPos;
+
+		if (ballOwner == 1)
+			newBallVelocity = glm::vec2(-BALL_RETURN_SPEED, 0);
+		else if (ballOwner == 2)
+			newBallVelocity = glm::vec2(BALL_RETURN_SPEED, 0);
+#endif
+
 		//Which out of top and side distances is smallest?
 		if (distX < distY)
 			return Side;
@@ -53,32 +62,6 @@ Brick::CollisionDirection Brick::CheckCollision(glm::vec2 ballPos)
 	}
 
 	return None;
-
-	/*glm::vec2 pt = ballPos;
-
-	float rectRight = m_position.x + BRICK_WIDTH;
-	float rectLeft = m_position.x - BRICK_WIDTH;
-	float rectTop = m_position.y + BRICK_HEIGHT;
-	float rectBottom = m_position.y - BRICK_HEIGHT;
-
-	if (ballPos.x > rectRight)
-		ballPos.x = rectRight;
-	if (ballPos.x < rectLeft)
-		ballPos.x = rectLeft;
-	if (ballPos.y > rectBottom)
-		ballPos.y = rectBottom;
-	if (ballPos.y < rectTop)
-		ballPos.y = rectTop;
-
-	if (glm::distance(pt, ballPos) < BALL_RADIUS)
-	{
-		if (glm::distance(pt.x, ballPos.x) <= glm::distance(pt.y, ballPos.y))
-			return Side;
-		else
-			return Top;
-	}
-
-	return None;*/
 }
 
 void Brick::Break()
@@ -86,6 +69,11 @@ void Brick::Break()
 	m_isAlive = false;
 
 	std::cout << "Brick broken" << std::endl;
+
+#ifdef NETWORKING_SERVER
+	if (UsePowerup)
+		UsePowerup(*this, server);
+#endif
 }
 
 #ifdef NETWORKING_SERVER
