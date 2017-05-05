@@ -28,8 +28,8 @@ void Server::Startup()
 	playerOne.yPos = 0;
 	playerTwo.yPos = 0;
 
-	ballOne = Ball(1, glm::vec2(-PADDLE_DISTANCE + PADDLE_WIDTH + BALL_RADIUS, 0), glm::normalize(glm::vec2(1, 1)) * BALL_SPEED);
-	ballTwo = Ball(2, glm::vec2(PADDLE_DISTANCE - PADDLE_WIDTH - BALL_RADIUS, 0), glm::normalize(glm::vec2(-1, 1)) * BALL_SPEED);
+	balls[0] = Ball(1, glm::vec2(-PADDLE_DISTANCE + PADDLE_WIDTH + BALL_RADIUS, 0), glm::normalize(glm::vec2(1, 1)) * BALL_SPEED);
+	balls[1] = Ball(2, glm::vec2(PADDLE_DISTANCE - PADDLE_WIDTH - BALL_RADIUS, 0), glm::normalize(glm::vec2(-1, 1)) * BALL_SPEED);
 
 	bricks[1].m_position = glm::vec2(2, 4);
 }
@@ -53,15 +53,14 @@ void Server::Run()
 	pPeerInterface->SetMaximumIncomingConnections(32);
 
 	//Set peer interface to send data for balls
-	ballOne.pPeerInterface = pPeerInterface;
-	ballTwo.pPeerInterface = pPeerInterface;
+	for (auto &ball : balls)
+	{
+		ball.second.pPeerInterface = pPeerInterface;
+		ball.second.m_hasBounced = true;
+	}
 
-	//Balls "have bounced" to start, so they send initial data
-	ballOne.m_hasBounced = true;
-	ballTwo.m_hasBounced = true;
-
-	ballOne.SetOwner(1);
-	ballTwo.SetOwner(2);
+	balls[0].SetOwner(1);
+	balls[1].SetOwner(2);
 
 	GenerateBricks();
 
@@ -253,8 +252,10 @@ void Server::SimulateGame(Server* s, RakNet::RakPeerInterface* pPeerInterface)
 			s->playerTwo.Move(deltaTime);
 
 			//Update balls on server, send data when they bounce
-			s->ballOne.Update(deltaTime, s->playerOne, s->playerTwo, &s->bricks);
-			s->ballTwo.Update(deltaTime, s->playerOne, s->playerTwo, &s->bricks);
+			for (auto &ball : s->balls)
+			{
+				ball.second.Update(deltaTime, s->playerOne, s->playerTwo, &s->bricks);
+			}
 
 			bool allBricksBroken = true;
 

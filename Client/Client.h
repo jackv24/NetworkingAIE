@@ -49,8 +49,7 @@ protected:
 
 	Player m_otherPlayer;
 
-	Ball ballOne;
-	Ball ballTwo;
+	std::unordered_map<int, Ball> m_balls;
 
 	std::unordered_map<int, Brick> m_bricks;
 

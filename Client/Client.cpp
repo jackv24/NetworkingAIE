@@ -37,9 +37,6 @@ bool Client::startup()
 	m_myPlayer.yPos = 0;
 	m_otherPlayer.yPos = 0;
 
-	ballOne = Ball(1, glm::vec2(-PADDLE_DISTANCE + PADDLE_WIDTH + BALL_RADIUS, 0), glm::vec2(0));
-	ballTwo = Ball(2, glm::vec2(PADDLE_DISTANCE - PADDLE_WIDTH - BALL_RADIUS, 0), glm::vec2(0));
-
 	ImGuiStyle* style = &ImGui::GetStyle();
 
 	style->Colors[ImGuiCol_WindowBg] = ImVec4(0, 0, 0, 0);
@@ -122,14 +119,19 @@ void Client::update(float deltaTime)
 	//Update balls
 	if (m_gameRunning)
 	{
-		ballOne.Update(deltaTime,
-			m_clientID == 1 ? m_myPlayer : m_otherPlayer,
-			m_clientID == 1 ? m_otherPlayer : m_myPlayer,
-			&m_bricks);
-		ballTwo.Update(deltaTime,
-			m_clientID == 1 ? m_myPlayer : m_otherPlayer,
-			m_clientID == 1 ? m_otherPlayer : m_myPlayer,
-			&m_bricks);
+		for (auto &ball : m_balls)
+		{
+			ball.second.Update(
+				deltaTime,
+				m_clientID == 1 ? m_myPlayer : m_otherPlayer,
+				m_clientID == 1 ? m_otherPlayer : m_myPlayer,
+				&m_bricks);
+
+			Gizmos::addSphere(
+				glm::vec3(ball.second.m_position, 0),
+				BALL_RADIUS, 8, 4,
+				ball.second.m_colour);
+		}
 	}
 
 	//Draw stage
@@ -164,10 +166,6 @@ void Client::update(float deltaTime)
 		glm::vec3(PADDLE_DISTANCE * swap, m_otherPlayer.yPos, 0),
 		glm::vec3(PADDLE_WIDTH, PADDLE_HEIGHT, 1),
 		colour2);
-
-	//Draw balls
-	Gizmos::addSphere(glm::vec3(ballOne.m_position, 0), BALL_RADIUS, 8, 4, ballOne.m_colour);
-	Gizmos::addSphere(glm::vec3(ballTwo.m_position, 0), BALL_RADIUS, 8, 4, ballTwo.m_colour);
 
 	//Draw bricks
 	for (auto brick : m_bricks)
@@ -398,20 +396,13 @@ void Client::OnReceivedBallDataPacket(RakNet::Packet* packet)
 	int id;
 	bsIn.Read(id);
 
-	if (id == 1)
-	{
-		bsIn.Read((char*)&ballOne.m_position, sizeof(glm::vec2));
-		bsIn.Read((char*)&ballOne.m_velocity, sizeof(glm::vec2));
-		bsIn.Read((char*)&ballOne.m_colour, sizeof(glm::vec4));
-	}
-	else if (id == 2)
-	{
-		bsIn.Read((char*)&ballTwo.m_position, sizeof(glm::vec2));
-		bsIn.Read((char*)&ballTwo.m_velocity, sizeof(glm::vec2));
-		bsIn.Read((char*)&ballTwo.m_colour, sizeof(glm::vec4));
-	}
-	else
-		std::cout << "Invalid Ball ID: " << id << std::endl;
+	Ball ball;
+
+	bsIn.Read((char*)&ball.m_position, sizeof(glm::vec2));
+	bsIn.Read((char*)&ball.m_velocity, sizeof(glm::vec2));
+	bsIn.Read((char*)&ball.m_colour, sizeof(glm::vec4));
+
+	m_balls[id] = ball;
 }
 
 void Client::OnReceivedBrickDataPacket(RakNet::Packet * packet)

@@ -31,8 +31,7 @@ public:
 	Player playerOne;
 	Player playerTwo;
 
-	Ball ballOne;
-	Ball ballTwo;
+	std::unordered_map<int, Ball> balls;
 
 	std::unordered_map<int, Brick> bricks;
 
